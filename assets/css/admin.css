@@ -1,0 +1,369 @@
+/* ----------------------------------------------------------------
+   Bespari ERP — Admin CSS
+   نگاشت از Nexlink CRM (Bootstrap 5.3) — راست‌چین + Vazirmatn
+   ---------------------------------------------------------------- */
+
+/* Nexlink tokens → Bespari */
+:root {
+	--bespari-primary: #5955D1;
+	--bespari-primary-hover: #4744a7;
+	--bespari-primary-subtle: #f5f5fc;
+	--bespari-primary-border: #d6d5f4;
+	--bespari-secondary: #29294B;
+	--bespari-success: #009966;
+	--bespari-success-subtle: #f0f9f6;
+	--bespari-success-border: #bfe6d9;
+	--bespari-info: #7008E7;
+	--bespari-info-subtle: #f6f0fe;
+	--bespari-info-border: #dbc1f9;
+	--bespari-warning: #F5A70D;
+	--bespari-warning-subtle: #fefaf0;
+	--bespari-warning-border: #fde9c3;
+	--bespari-danger: #F83636;
+	--bespari-danger-subtle: #fff3f3;
+	--bespari-danger-border: #fdcdcd;
+	--bespari-dark: #0C243C;
+	--bespari-muted: #696981;
+	--bespari-gray: #97A1C0;
+	--bespari-light: #F2F2F6;
+	--bespari-bg: #FDFDFF;
+	--bespari-bg-secondary: #f9f9f9;
+	--bespari-card-bg: #ffffff;
+	--bespari-border: #EEEEF3;
+	--bespari-radius: 0.625rem;
+	--bespari-radius-sm: 0.375rem;
+	--bespari-radius-pill: 50rem;
+	--bespari-shadow: 0 5px 10px rgba(2, 2, 76, .02);
+	--bespari-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, .06);
+}
+
+/* Wrap */
+.bespari-wrap {
+	direction: rtl;
+	font-family: "Vazirmatn", "IRANSans", Tahoma, sans-serif;
+	background: var(--bespari-bg);
+}
+.bespari-wrap * { box-sizing: border-box; }
+
+/* Header */
+.bespari-header { margin-bottom: 20px; }
+.bespari-header__title {
+	display: flex; align-items: center; gap: 10px;
+	font-size: 20px; font-weight: 700; color: var(--bespari-dark); margin: 0;
+	line-height: 1.4;
+}
+.bespari-header__title .dashicons { color: var(--bespari-primary); }
+.bespari-header__subtitle { color: var(--bespari-muted); margin: 6px 0 0; font-size: 13px; font-weight: 500; }
+.bespari-page-header { margin-bottom: 16px; }
+.bespari-page-title { font-size: 18px; font-weight: 700; margin: 0; color: var(--bespari-dark); }
+.bespari-page-desc { color: var(--bespari-muted); margin: 4px 0 0; font-size: 13px; }
+
+/* Tabs — Nexlink: subtle underline + pill active */
+.bespari-tabs {
+	display: flex; gap: 4px; border-bottom: 1px solid var(--bespari-border);
+	margin-bottom: 20px; padding-bottom: 0; flex-wrap: wrap;
+}
+.bespari-tab {
+	display: inline-flex; align-items: center; gap: 6px;
+	padding: 10px 14px; border-radius: var(--bespari-radius-sm) var(--bespari-radius-sm) 0 0;
+	text-decoration: none; color: var(--bespari-muted); font-weight: 600; font-size: 13px;
+	border: 1px solid transparent; border-bottom: none; transition: all .15s;
+}
+.bespari-tab:hover { color: var(--bespari-primary); background: var(--bespari-primary-subtle); }
+.bespari-tab.is-active { color: var(--bespari-primary); background: #fff; border-color: var(--bespari-border); margin-bottom: -1px; }
+
+/* Notices — subtle bg + border */
+.bespari-notice {
+	display: flex; align-items: center; gap: 10px;
+	padding: 12px 16px; border-radius: var(--bespari-radius-sm); margin-bottom: 16px;
+	border: 1px solid; font-size: 13px; font-weight: 600;
+}
+.bespari-notice--success { background: var(--bespari-success-subtle); border-color: var(--bespari-success-border); color: #003d29; }
+.bespari-notice--error   { background: var(--bespari-danger-subtle); border-color: var(--bespari-danger-border); color: #631616; }
+.bespari-notice--info    { background: var(--bespari-primary-subtle); border-color: var(--bespari-primary-border); color: #242254; }
+
+/* Stats grid */
+.bespari-stats-grid {
+	display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;
+}
+@media (max-width: 1100px) { .bespari-stats-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 600px)  { .bespari-stats-grid { grid-template-columns: 1fr; } }
+
+/* Stat card — Nexlink: white card, avatar icon, dark value, muted label */
+.bespari-card {
+	display: flex; align-items: center; gap: 14px;
+	padding: 20px; border-radius: var(--bespari-radius);
+	background: var(--bespari-card-bg);
+	border: 1px solid var(--bespari-border);
+	box-shadow: var(--bespari-shadow);
+}
+.bespari-avatar {
+	width: 44px; height: 44px; min-width: 44px;
+	display: flex; align-items: center; justify-content: center;
+	border-radius: var(--bespari-radius-sm); font-size: 20px; flex-shrink: 0;
+}
+.bespari-avatar--primary { background: var(--bespari-primary-subtle); color: var(--bespari-primary); border: 1px solid var(--bespari-primary-border); }
+.bespari-avatar--info    { background: var(--bespari-info-subtle); color: var(--bespari-info); border: 1px solid var(--bespari-info-border); }
+.bespari-avatar--success { background: var(--bespari-success-subtle); color: var(--bespari-success); border: 1px solid var(--bespari-success-border); }
+.bespari-avatar--warning { background: var(--bespari-warning-subtle); color: var(--bespari-warning); border: 1px solid var(--bespari-warning-border); }
+.bespari-avatar--danger  { background: var(--bespari-danger-subtle); color: var(--bespari-danger); border: 1px solid var(--bespari-danger-border); }
+.bespari-card__body { display: flex; flex-direction: column; min-width: 0; }
+.bespari-card__value { font-size: 22px; font-weight: 700; line-height: 1; color: var(--bespari-dark); }
+.bespari-card__label { font-size: 12px; font-weight: 500; color: var(--bespari-muted); margin-top: 4px; }
+.bespari-card__trend { font-size: 11px; font-weight: 600; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; }
+.bespari-card__trend--up { color: var(--bespari-success); }
+.bespari-card__trend--down { color: var(--bespari-danger); }
+
+/* Legacy gradient modifiers — keep for compat, now map to white+avatar (no gradient) */
+.bespari-card--blue,
+.bespari-card--purple,
+.bespari-card--teal,
+.bespari-card--amber {
+	background: var(--bespari-card-bg);
+	color: var(--bespari-dark);
+}
+
+/* Boxes / Rows — .card style */
+.bespari-row { display: flex; gap: 16px; }
+.bespari-col--8 { flex: 2; min-width: 0; }
+.bespari-col--4 { flex: 1; min-width: 0; }
+@media (max-width: 900px) { .bespari-row { flex-direction: column; } }
+.bespari-box {
+	background: var(--bespari-card-bg); border: 1px solid var(--bespari-border);
+	border-radius: var(--bespari-radius); padding: 16px 20px; box-shadow: var(--bespari-shadow);
+}
+.bespari-box--accent { background: var(--bespari-warning-subtle); border-color: var(--bespari-warning-border); }
+.bespari-box__title { font-size: 13px; font-weight: 700; margin: 0 0 14px; color: var(--bespari-dark); letter-spacing: 0; }
+
+/* Tables — Nexlink: header #f9f9f9, border #EEEEF3, hover subtle */
+.bespari-table { border-collapse: collapse; width: 100%; background: #fff; border-radius: var(--bespari-radius); overflow: hidden; border: 1px solid var(--bespari-border); }
+.bespari-table th, .bespari-table td { padding: 10px 12px; text-align: right; font-size: 13px; border-bottom: 1px solid var(--bespari-border); }
+.bespari-table th { background: var(--bespari-bg-secondary); font-weight: 700; color: var(--bespari-dark); white-space: nowrap; }
+.bespari-table tbody tr:hover { background: var(--bespari-primary-subtle); }
+.bespari-table tbody tr:last-child td { border-bottom: none; }
+.bespari-phase-table { width: 100%; border-collapse: collapse; }
+.bespari-phase-table th, .bespari-phase-table td { padding: 10px 12px; text-align: right; font-size: 13px; border-bottom: 1px solid var(--bespari-border); }
+.bespari-phase-table th { background: var(--bespari-bg-secondary); font-weight: 700; color: var(--bespari-dark); }
+
+/* Badges — subtle bg with matching border */
+.bespari-badge {
+	display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--bespari-radius-pill);
+	font-size: 11px; font-weight: 700; line-height: 1.6; white-space: nowrap; border: 1px solid transparent;
+}
+.bespari-badge--success { background: var(--bespari-success-subtle); color: #003d29; border-color: var(--bespari-success-border); }
+.bespari-badge--muted   { background: var(--bespari-light); color: var(--bespari-muted); border-color: var(--bespari-border); }
+.bespari-badge--info    { background: var(--bespari-primary-subtle); color: #242254; border-color: var(--bespari-primary-border); }
+.bespari-badge--warning { background: var(--bespari-warning-subtle); color: #624305; border-color: var(--bespari-warning-border); }
+.bespari-badge--pending { background: var(--bespari-info-subtle); color: #2d035c; border-color: var(--bespari-info-border); }
+.bespari-badge--danger  { background: var(--bespari-danger-subtle); color: #631616; border-color: var(--bespari-danger-border); }
+.bespari-muted { color: var(--bespari-muted); font-size: 12px; }
+
+/* Toolbar / Filters */
+.bespari-toolbar { margin: 12px 0; }
+.bespari-filters { display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+.bespari-filters input[type="search"],
+.bespari-filters select { min-width: 180px; border-color: var(--bespari-border); border-radius: var(--bespari-radius-sm); }
+
+/* Buttons — primary #5955D1 */
+.bespari-actions .button { margin: 2px; border-radius: var(--bespari-radius-sm); }
+.button-primary { background: var(--bespari-primary) !important; border-color: var(--bespari-primary) !important; }
+.button-primary:hover { background: var(--bespari-primary-hover) !important; border-color: var(--bespari-primary-hover) !important; }
+
+/* Forms */
+.bespari-form .form-table th { width: 220px; color: var(--bespari-dark); }
+.bespari-section-title { font-size: 13px; font-weight: 700; margin: 20px 0 10px; color: var(--bespari-dark); border-bottom: 1px solid var(--bespari-border); padding-bottom: 8px; }
+.required { color: var(--bespari-danger); }
+
+/* Channel map table inside product form */
+.bespari-channel-map input.small-text { width: 90px; }
+.bespari-channel-map input.regular-text { width: 160px; }
+
+/* Empty state */
+.bespari-empty { background: #fff; border: 1px dashed var(--bespari-border); border-radius: var(--bespari-radius); padding: 24px; text-align: center; color: var(--bespari-muted); margin: 16px 0; }
+
+/* Shortcuts */
+.bespari-shortcuts { list-style: none; margin: 0; padding: 0; }
+.bespari-shortcuts li { margin: 6px 0; }
+.bespari-shortcut-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--bespari-primary); font-weight: 600; font-size: 13px; }
+.bespari-shortcut-link:hover { color: var(--bespari-primary-hover); }
+
+/* Progress — primary bar on light track */
+.bespari-progress { background: var(--bespari-light); border-radius: var(--bespari-radius-pill); height: 8px; overflow: hidden; border: 1px solid var(--bespari-border); }
+.bespari-progress__bar { background: var(--bespari-primary); height: 100%; border-radius: var(--bespari-radius-pill); transition: width .3s; }
+.bespari-progress__label { font-size: 12px; color: var(--bespari-muted); margin-top: 8px; }
+
+/* Preview result */
+.bespari-preview-result { margin-top: 16px; background: var(--bespari-bg-secondary); border: 1px solid var(--bespari-border); border-radius: var(--bespari-radius); padding: 16px; min-height: 48px; }
+.bespari-preview-result table { width: 100%; border-collapse: collapse; }
+.bespari-preview-result th, .bespari-preview-result td { padding: 8px 10px; text-align: right; font-size: 13px; border-bottom: 1px solid var(--bespari-border); }
+.bespari-preview-result th { background: #fff; color: var(--bespari-dark); }
+
+/* Card header helper (for future Nexlink-style card headers) */
+.bespari-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.bespari-card-header__title { font-size: 13px; font-weight: 700; color: var(--bespari-dark); margin: 0; }
+.bespari-card-header__action { font-size: 12px; }
+
+/* Responsive helpers */
+@media (max-width: 782px) {
+	.bespari-form .form-table th { width: auto; display: block; padding-bottom: 4px; }
+	.bespari-form .form-table td { display: block; }
+}
+
+/* ----------------------------------------------------------------
+   NexLink styling for WP-default elements inside .bespari-wrap
+   (فرم‌ها، لیست‌ها، دکمه‌ها، ورودی‌ها)
+   ---------------------------------------------------------------- */
+
+/* دکمه‌ها */
+.bespari-wrap .button,
+.bespari-wrap .button-secondary {
+	background: #fff;
+	border: 1px solid var(--bespari-border);
+	border-radius: 8px;
+	color: var(--bespari-dark);
+	font-family: inherit;
+	font-weight: 600;
+	box-shadow: none;
+	transition: all .15s;
+}
+.bespari-wrap .button:hover,
+.bespari-wrap .button-secondary:hover {
+	background: var(--bespari-bg-secondary);
+	border-color: var(--bespari-border);
+	color: var(--bespari-primary);
+}
+.bespari-wrap .button-primary {
+	background: var(--bespari-primary) !important;
+	border-color: var(--bespari-primary) !important;
+	color: #fff !important;
+	text-shadow: none;
+}
+.bespari-wrap .button-primary:hover,
+.bespari-wrap .button-primary:focus {
+	background: var(--bespari-primary-hover) !important;
+	border-color: var(--bespari-primary-hover) !important;
+}
+.bespari-wrap .button-link-delete { color: var(--bespari-danger); }
+.bespari-wrap .button-small { border-radius: 6px; }
+
+/* ورودی‌ها */
+.bespari-wrap input[type="text"],
+.bespari-wrap input[type="search"],
+.bespari-wrap input[type="email"],
+.bespari-wrap input[type="url"],
+.bespari-wrap input[type="password"],
+.bespari-wrap input[type="number"],
+.bespari-wrap input[type="date"],
+.bespari-wrap input[type="datetime-local"],
+.bespari-wrap input[type="tel"],
+.bespari-wrap select,
+.bespari-wrap textarea {
+	border: 1px solid var(--bespari-border);
+	border-radius: 8px;
+	color: var(--bespari-dark);
+	font-family: inherit;
+	box-shadow: none;
+	transition: border-color .15s, box-shadow .15s;
+}
+.bespari-wrap input:focus,
+.bespari-wrap select:focus,
+.bespari-wrap textarea:focus {
+	border-color: var(--bespari-primary) !important;
+	box-shadow: 0 0 0 3px rgba(89, 85, 209, .25) !important;
+	outline: none;
+}
+.bespari-wrap input[type="checkbox"],
+.bespari-wrap input[type="radio"] { accent-color: var(--bespari-primary); }
+.bespari-wrap ::placeholder { color: var(--bespari-gray); }
+
+/* form-table — NexLink: label تیره، توضیح خاکستری */
+.bespari-wrap .form-table { margin-top: 8px; }
+.bespari-wrap .form-table th {
+	color: var(--bespari-dark);
+	font-weight: 600;
+	font-size: 13px;
+	padding: 16px 10px 16px 20px;
+	vertical-align: top;
+}
+.bespari-wrap .form-table td { padding: 12px 20px 12px 10px; vertical-align: top; }
+.bespari-wrap .form-table .description,
+.bespari-wrap .description { color: var(--bespari-muted); font-size: 12px; margin-top: 4px; }
+.bespari-wrap .required { color: var(--bespari-danger); font-weight: 700; }
+
+/* جدول‌های لیست — widefat هم به استایل bespari-table درآید */
+.bespari-wrap table.widefat {
+	background: #fff;
+	border: 1px solid var(--bespari-border) !important;
+	border-radius: var(--bespari-radius);
+	box-shadow: var(--bespari-shadow);
+	overflow: hidden;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+.bespari-wrap table.widefat th,
+.bespari-wrap table.widefat td {
+	border-bottom: 1px solid var(--bespari-border) !important;
+	text-align: right;
+	font-size: 13px;
+	padding: 10px 12px;
+}
+.bespari-wrap table.widefat th {
+	background: var(--bespari-bg-secondary);
+	color: var(--bespari-dark);
+	font-weight: 700;
+}
+.bespari-wrap table.widefat tbody tr:hover { background: var(--bespari-primary-subtle); }
+.bespari-wrap table.widefat.striped > tbody > :nth-child(odd) { background: #fff; }
+.bespari-wrap table.widefat.striped > tbody > :nth-child(even) { background: var(--bespari-bg-secondary); }
+.bespari-wrap table.widefat a { color: var(--bespari-primary); text-decoration: none; font-weight: 600; }
+.bespari-wrap table.widefat a:hover { color: var(--bespari-primary-hover); }
+
+/* صفحه‌بندی */
+.bespari-wrap .tablenav { color: var(--bespari-muted); }
+.bespari-wrap .tablenav-pages a,
+.bespari-wrap .tablenav-pages-navspan {
+	background: #fff;
+	border: 1px solid var(--bespari-border);
+	border-radius: 6px;
+	color: var(--bespari-primary);
+	margin-inline-start: 3px;
+}
+.bespari-wrap .tablenav-pages .current {
+	background: var(--bespari-primary);
+	border-color: var(--bespari-primary);
+	color: #fff;
+}
+
+/* عنوان‌ها و متن‌های پیش‌فرض WP داخل پنل */
+.bespari-wrap .wp-heading-inline { color: var(--bespari-dark); }
+.bespari-wrap a { color: var(--bespari-primary); }
+.bespari-wrap a:hover { color: var(--bespari-primary-hover); }
+
+/* باکس سفید */
+.bespari-box--white { background: var(--bespari-card-bg); }
+
+/* ردیف آیتم سفارش (JS) */
+.bespari-order-item-row { background: var(--bespari-bg-secondary); border-radius: 8px; margin-bottom: 6px; }
+
+/* ================= صفحه‌ی معرفی افزونه ================= */
+.bespari-intro { display: grid; grid-template-columns: 340px 1fr; gap: 20px; max-width: 1100px; margin-top: 15px; }
+.bespari-intro__card { background: var(--bespari-card-bg); border: 1px solid var(--bespari-border); border-radius: 14px; padding: 32px 28px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.05); }
+.bespari-intro__icon { width: 76px; height: 76px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg,#6366f1,#8b5cf6); display: flex; align-items: center; justify-content: center; }
+.bespari-intro__icon .dashicons { font-size: 40px; width: 40px; height: 40px; color: #fff; }
+.bespari-intro__title { font-size: 26px; margin: 0 0 4px; }
+.bespari-intro__title span { color: #6366f1; }
+.bespari-intro__version { color: var(--bespari-text-muted); margin: 0 0 16px; font-size: 13px; }
+.bespari-intro__desc { color: var(--bespari-text-secondary); line-height: 1.8; margin: 0 0 24px; font-size: 14px; }
+.bespari-intro__button { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff !important; text-decoration: none; padding: 13px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; transition: transform .15s, box-shadow .15s; }
+.bespari-intro__button:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(99,102,241,.35); }
+.bespari-intro__button .dashicons { font-size: 17px; }
+.bespari-intro__url { margin: 14px 0 0; font-size: 12px; color: var(--bespari-text-muted); direction: ltr; }
+.bespari-intro__features, .bespari-intro__system { background: var(--bespari-card-bg); border: 1px solid var(--bespari-border); border-radius: 14px; padding: 24px 28px; }
+.bespari-intro__features h2, .bespari-intro__system h2 { margin: 0 0 16px; font-size: 16px; }
+.bespari-intro__features ul { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; list-style: none; padding: 0; }
+.bespari-intro__features li { display: flex; align-items: center; gap: 9px; font-size: 14px; color: var(--bespari-text-secondary); }
+.bespari-intro__features li .dashicons { color: #22c55e; font-size: 16px; }
+.bespari-intro__system dl { display: grid; grid-template-columns: 150px 1fr; gap: 10px 16px; margin: 0; }
+.bespari-intro__system dt { color: var(--bespari-text-muted); font-size: 13px; }
+.bespari-intro__system dd { margin: 0; font-size: 13px; font-weight: 600; direction: ltr; text-align: left; }
+@media (max-width: 900px) { .bespari-intro { grid-template-columns: 1fr; } .bespari-intro__features ul { grid-template-columns: 1fr; } }

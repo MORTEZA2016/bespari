@@ -1,0 +1,298 @@
+/**
+ * پنل مستقل بسپاری — NexLink RTL design (کارت‌های سفید، بنفش #5955D1، سایدبار).
+ */
+
+:root {
+	--bp-primary: #5955D1;
+	--bp-primary-hover: #4744a7;
+	--bp-primary-subtle: #f5f5fc;
+	--bp-primary-border: #d6d5f4;
+	--bp-success: #009966;
+	--bp-success-subtle: #f0f9f6;
+	--bp-warning: #F5A70D;
+	--bp-warning-subtle: #fefaf0;
+	--bp-danger: #F83636;
+	--bp-danger-subtle: #fff3f3;
+	--bp-dark: #0C243C;
+	--bp-muted: #696981;
+	--bp-gray: #97A1C0;
+	--bp-light: #F2F2F6;
+	--bp-bg: #FDFDFF;
+	--bp-bg2: #f9f9f9;
+	--bp-border: #EEEEF3;
+	--bp-radius: 0.625rem;
+	--bp-shadow: 0 0.26rem 1.126rem rgba(45, 42, 60, .08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body.bpanel-body {
+	font-family: Vazirmatn, IRANSans, Tahoma, sans-serif;
+	background: var(--bp-bg);
+	color: var(--bp-dark);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+a { color: var(--bp-primary); text-decoration: none; }
+a:hover { color: var(--bp-primary-hover); }
+
+/* ---------- لاگین ---------- */
+.bpanel-login-body {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	background: linear-gradient(135deg, #f5f5fc 0%, #fdfdff 100%);
+}
+.bpanel-login {
+	width: 400px;
+	max-width: calc(100vw - 32px);
+	background: #fff;
+	border: 1px solid var(--bp-border);
+	border-radius: 1rem;
+	box-shadow: var(--bp-shadow);
+	padding: 40px 36px;
+}
+.bpanel-login__logo { font-size: 26px; font-weight: 800; text-align: center; color: var(--bp-dark); }
+.bpanel-login__logo span { color: var(--bp-primary); }
+.bpanel-login__desc { text-align: center; color: var(--bp-muted); font-size: 13px; margin: 6px 0 24px; }
+.bpanel-login .bpanel-notice { margin-bottom: 16px; }
+
+/* ---------- فرم ---------- */
+.bpanel-field { display: block; margin-bottom: 14px; }
+.bpanel-field > span { display: block; font-size: 12px; font-weight: 600; color: var(--bp-muted); margin-bottom: 5px; }
+.bpanel-field input:not([type="checkbox"]) {
+	width: 100%;
+	padding: 10px 14px;
+	border: 1px solid var(--bp-border);
+	border-radius: 8px;
+	font-family: inherit;
+	font-size: 14px;
+	color: var(--bp-dark);
+	outline: none;
+	transition: border-color .15s, box-shadow .15s;
+}
+.bpanel-field input:focus {
+	border-color: var(--bp-primary);
+	box-shadow: 0 0 0 3px rgba(89, 85, 209, .25);
+}
+.bpanel-field--check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--bp-muted); }
+.bpanel-field--check input { accent-color: var(--bp-primary); }
+
+/* ---------- دکمه‌ها ---------- */
+.bpanel-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 9px 18px;
+	background: #fff;
+	border: 1px solid var(--bp-border);
+	border-radius: 8px;
+	color: var(--bp-dark);
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all .15s;
+}
+.bpanel-btn:hover { background: var(--bp-bg2); color: var(--bp-primary); }
+.bpanel-btn--primary {
+	background: var(--bp-primary);
+	border-color: var(--bp-primary);
+	color: #fff;
+}
+.bpanel-btn--primary:hover { background: var(--bp-primary-hover); border-color: var(--bp-primary-hover); color: #fff; }
+.bpanel-btn--block { width: 100%; padding: 12px; font-size: 15px; justify-content: center; }
+
+/* ---------- اعلان ---------- */
+.bpanel-notice {
+	padding: 11px 16px;
+	border-radius: 8px;
+	border: 1px solid;
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 16px;
+}
+.bpanel-notice--error { background: var(--bp-danger-subtle); border-color: #fdcdcd; color: #631616; }
+.bpanel-notice--success { background: var(--bp-success-subtle); border-color: #bfe6d9; color: #003d29; }
+
+/* ---------- چیدمان پنل ---------- */
+.bpanel { display: flex; min-height: 100vh; }
+
+/* سایدبار */
+.bpanel-sidebar {
+	width: 240px;
+	min-width: 240px;
+	background: #fff;
+	border-inline-start: 1px solid var(--bp-border);
+	display: flex;
+	flex-direction: column;
+	padding: 20px 14px;
+	position: sticky;
+	top: 0;
+	height: 100vh;
+	overflow-y: auto;
+}
+.bpanel-sidebar__logo {
+	font-size: 20px;
+	font-weight: 800;
+	color: var(--bp-dark);
+	padding: 0 10px 18px;
+	border-bottom: 1px solid var(--bp-border);
+	margin-bottom: 14px;
+}
+.bpanel-sidebar__logo span { color: var(--bp-primary); }
+
+.bpanel-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.bpanel-nav__item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	color: var(--bp-muted);
+	font-size: 13px;
+	font-weight: 600;
+	transition: all .15s;
+}
+.bpanel-nav__item .dashicons { font-size: 18px; width: 18px; height: 18px; }
+.bpanel-nav__item:hover { background: var(--bp-primary-subtle); color: var(--bp-primary); }
+.bpanel-nav__item.is-active {
+	background: var(--bp-primary);
+	color: #fff;
+}
+.bpanel-nav__item.is-active:hover { color: #fff; }
+.bpanel-nav__item--logout { color: var(--bp-danger); margin-top: 10px; }
+.bpanel-nav__item--logout:hover { background: var(--bp-danger-subtle); color: var(--bp-danger); }
+
+.bpanel-sidebar__user {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 10px 0;
+	border-top: 1px solid var(--bp-border);
+	margin-top: 14px;
+}
+.bpanel-sidebar__avatar {
+	width: 38px; height: 38px;
+	min-width: 38px;
+	border-radius: 10px;
+	background: var(--bp-primary-subtle);
+	color: var(--bp-primary);
+	border: 1px solid var(--bp-primary-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 800;
+	font-size: 16px;
+}
+.bpanel-sidebar__uname { font-size: 13px; font-weight: 700; color: var(--bp-dark); }
+.bpanel-sidebar__urole { font-size: 11px; color: var(--bp-muted); }
+
+/* محتوای اصلی */
+.bpanel-main { flex: 1; min-width: 0; padding: 0 26px 30px; }
+.bpanel-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 18px 0;
+	border-bottom: 1px solid var(--bp-border);
+	margin-bottom: 20px;
+}
+.bpanel-topbar__title { font-size: 19px; font-weight: 700; color: var(--bp-dark); }
+.bpanel-topbar__actions { display: flex; gap: 8px; }
+
+.bpanel-content { max-width: 1200px; }
+
+/* ---------- آمار ---------- */
+.bpanel-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 14px;
+	margin-bottom: 22px;
+}
+.bpanel-stat {
+	background: #fff;
+	border: 1px solid var(--bp-border);
+	border-radius: var(--bp-radius);
+	box-shadow: var(--bp-shadow);
+	padding: 18px 20px;
+}
+.bpanel-stat__value { font-size: 21px; font-weight: 800; color: var(--bp-dark); }
+.bpanel-stat__label { font-size: 12px; color: var(--bp-muted); margin-top: 5px; }
+
+.bpanel-section { font-size: 14px; font-weight: 700; color: var(--bp-dark); margin: 18px 0 12px; }
+
+/* ---------- کارت و جدول ---------- */
+.bpanel-card {
+	background: #fff;
+	border: 1px solid var(--bp-border);
+	border-radius: var(--bp-radius);
+	box-shadow: var(--bp-shadow);
+	overflow: hidden;
+	margin-bottom: 18px;
+}
+.bpanel-table { width: 100%; border-collapse: collapse; }
+.bpanel-table th, .bpanel-table td {
+	padding: 10px 14px;
+	text-align: right;
+	font-size: 13px;
+	border-bottom: 1px solid var(--bp-border);
+}
+.bpanel-table th {
+	background: var(--bp-bg2);
+	color: var(--bp-dark);
+	font-weight: 700;
+	white-space: nowrap;
+}
+.bpanel-table tbody tr:hover { background: var(--bp-primary-subtle); }
+.bpanel-table tbody tr:last-child td { border-bottom: none; }
+.bpanel-empty { text-align: center; color: var(--bp-muted); padding: 28px 0 !important; }
+
+/* ---------- بج ---------- */
+.bpanel-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 10px;
+	border-radius: 50rem;
+	font-size: 11px;
+	font-weight: 700;
+	border: 1px solid transparent;
+	white-space: nowrap;
+}
+.bpanel-badge--success { background: var(--bp-success-subtle); color: #003d29; border-color: #bfe6d9; }
+.bpanel-badge--muted   { background: var(--bp-light); color: var(--bp-muted); border-color: var(--bp-border); }
+.bpanel-badge--info    { background: var(--bp-primary-subtle); color: #242254; border-color: var(--bp-primary-border); }
+.bpanel-badge--warning { background: var(--bp-warning-subtle); color: #624305; border-color: #fde9c3; }
+.bpanel-badge--danger  { background: var(--bp-danger-subtle); color: #631616; border-color: #fdcdcd; }
+
+/* ---------- صفحه‌بندی ---------- */
+.bpanel-pagination { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+.bpanel-page {
+	padding: 6px 12px;
+	background: #fff;
+	border: 1px solid var(--bp-border);
+	border-radius: 6px;
+	color: var(--bp-primary);
+	font-size: 12px;
+	font-weight: 600;
+}
+.bpanel-page.is-current { background: var(--bp-primary); border-color: var(--bp-primary); color: #fff; }
+
+/* ---------- ریسپانسیو ---------- */
+@media (max-width: 820px) {
+	.bpanel { flex-direction: column; }
+	.bpanel-sidebar {
+		width: 100%;
+		min-width: 0;
+		height: auto;
+		position: static;
+		border-inline-start: none;
+		border-bottom: 1px solid var(--bp-border);
+	}
+	.bpanel-nav { flex-direction: row; flex-wrap: wrap; }
+	.bpanel-main { padding: 0 14px 24px; }
+}
