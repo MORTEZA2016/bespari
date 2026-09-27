@@ -145,7 +145,6 @@
       "Bash(curl -s --max-time 25 'http://localhost/delori/bs-tokentool.php?action=cancel&order=3')",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(k\\) for k in d.keys\\(\\)]\")",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('mcpOAuth'\\), indent=2\\)[:2000]\\)\")",
-      "Bash(python -c \"import json; d=json.load\\(open\\('C:/Users/MoRtEzA/.claude/.credentials.json'\\)\\); print\\(d['mcpOAuth']['trello|9d19f903a0535c1f']['accessToken']\\)\")",
       "Bash(python -)",
       "Bash(cd \"F:/plugin/bespari\" && mkdir -p .claude/history && echo \"created .claude/history\" && ls -la .claude/history/)",
       "Bash(awk '{print $5, $9}')",
@@ -207,7 +206,15 @@
       "Bash(curl -s --max-time 15 \"http://localhost/delori/panel/\" -o /tmp/panel2.html -w \"HTTP %{http_code}\\\\n\")",
       "Bash(rm -f includes/Admin/PosPage.php)",
       "Bash(rm -f includes/Admin/Panel/PanelPage.php includes/Admin/Panel/PanelViews.php)",
-      "Bash(rm -f assets/css/pos.css assets/js/pos.js)"
+      "Bash(rm -f assets/css/pos.css assets/js/pos.js)",
+      "Bash(claude mcp *)",
+      "mcp__trello__trelloReadList",
+      "mcp__trello__trelloReadCard",
+      "mcp__trello__trelloWriteCard"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "trello"
+  ]
 }

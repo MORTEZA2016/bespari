@@ -249,3 +249,42 @@ Task بسته شد. BSPR-002 (خط تولید) نیز در پی تست‌های 
 
 **Next Step:**
 Task بسته شد. هیچ Task فعالی باقی نمانده؛ منتظر دستور بعدی کاربر.
+
+---
+
+## TASK-20260927-006 (BSP-TEST-VPS)
+
+**Status:** COMPLETED
+
+**Goal:** تست اتصال و اجرای خودکار Claude VPS به سه سرویس: **Trello** (MCP server)،
+**GitHub** (git remote) و **پروژه‌ی Bespari** روی این VPS. این یک تست زیرساختی است
+(کارت آن در بورد bespari، لیست Task Queue)، نه فیچر محصول.
+
+**Started/Completed:** 2026-09-27
+
+**Tests:**
+
+| تست | نتیجه |
+|---|---|
+| Trello MCP: احراز هوییت کاربر (`mmozafarnia`، timezone Asia/Tehran) | PASS |
+| Trello MCP: خواندن بورد bespari + لیست Task Queue + کارت BSP-TEST-VPS | PASS |
+| GitHub: دسترسی خواندن (`git ls-remote origin` — شاخه‌های main + vps-worker) | PASS |
+| GitHub: دسترسی نوشتن (commit + push به `origin/vps-worker`) | PASS |
+| پروژه: وجود فایل‌های اصلی (`bespari-core.php`، `includes/`، `assets/`، `uninstall.php`) | PASS |
+| پروژه: git repo سالم روی شاخه‌ی `vps-worker` و همگام با origin | PASS |
+
+**Changed Files (فقط فایل‌های Memory/زیرساخت — کد محصول دست نخورد):**
+- `PROJECT_LOG.md` — افزودن همین بخش.
+- `.claude/CURRENT_TASK.md` — به‌روزرسانی به این Task.
+- `.mcp.json` — پیکربندی MCP server تrello (جدید روی این VPS).
+- `.claude/settings.local.json` — فعال‌سازی trello MCP + permissionهای ابزارهای Trello.
+
+**Issues / Notes:**
+- PHP روی این VPS نصب نیست (برخلاف محیط dev قبلی که XAMPP داشت). برای این تست نیازی نبود؛
+  برای Taskهای فیچر که نیاز به `php -l` یا استقرار روی dev دارند، باید PHP نصب شود.
+- `git config user.name/user.email` محلی تنظیم نبود؛ با noreply GitHub مالک مخزن تنظیم شد.
+- کارت Trello به‌عمد در لیست Task Queue نگه داشته شد (جابجایی/بستن کارت درخواست نشده بود).
+
+**Next Step:**
+تست موفق بود — زیرساخت VPS (Trello + GitHub + پروژه) همگی از طریق این کلاینت در دسترس
+و قابل نوشتن هستند. VPS آماده‌ی دریافت Taskهای واقعی است.

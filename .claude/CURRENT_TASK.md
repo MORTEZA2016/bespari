@@ -1,42 +1,37 @@
 # Current Task
 
 > این فایل مهم‌ترین فایل برای Resume کردن پروژه است.
-> آخرین به‌روزرسانی: 2026-09-26
+> آخرین به‌روزرسانی: 2026-09-27
 
 ## Task ID
-BSPR-004 — اصلاح تاریخ شمسی (الگوریتم جلالی + شمسی‌سازی مستقل نمایش تاریخ پنل)
+BSP-TEST-VPS — تست اتصال و اجرای خودکار Claude VPS (Trello + GitHub + پروژه Bespari)
 
 ## Status
-COMPLETED — همه‌ی تست‌ها PASS شدند و ۳ فایل روی dev مستقر شد.
+COMPLETED — هر شش تست اتصال PASS شدند. این یک تست زیرساختی بود، نه فیچر محصول.
 
 ## Goal
-۱) `Helpers::gregorian_to_jalali()` الگوریتم اشتباهی داشت (۱۴۰۵ شمسی را ۲۳۷۷ نشان می‌داد)؛
-۲) نمایش تاریخ پنل به پک محلی سایت وابسته بود. هدف: الگوریتم صحیح + شمسی‌سازی مستقل.
-
-## Completed
-- جایگزینی `gregorian_to_jalali()` با الگوریتم استاندارد جلالی.
-- افزودن `Helpers::to_jalali_date()` + refactor `to_jalali()`.
-- `date_fa` (خط تولید) و ستون تاریخ لیست سفارشات پنل به `to_jalali_date()`.
-- استقرار روی dev + تست کامل.
+تأیید اینکه کلاینت Claude روی این VPS می‌تواند: کارت‌های Trello را از طریق MCP بخواند،
+به مخزن GitHub دسترسی خواندن/نوشتن داشته باشد، و فایل‌های پروژه Bespari را ببیند و ویرایش کند.
 
 ## Key Results
-- ۱۱ تاریخ مرجع معروف PASS (نوروز، کبیسه‌های میلادی/شمسی، مرز قرن).
-- ۳۲۸۷ روز متوالی (۲۰۱۸→۲۰۲۶) در برابر `IntlCalendar` فارسی ICU: ۰ عدمتطابق.
-- A/B زنده تحت وردپرس: خروجی قدیم (`mysql2date`) و جدید (`to_jalali_date`) دقیقاً یکسان
-  (۸ تاریخ شامل مرز نیمه‌شب با timezone سایت +03:30) → بدون رگرسیون UI.
-- روی dev، `mysql2date` خودش شمسی برمی‌گرداند، پس کاربر تغییری نمی‌بیند؛ اما اکنون
-  نمایش شمسی روی هر سایتی مستقل از پک محلی کار می‌کند.
+- Trello MCP: احراز هویت به‌عنوان `mmozafarnia`؛ خواندن بورد bespari، لیست Task Queue و
+  کارت BSP-TEST-VPS — همه PASS.
+- GitHub: `git ls-remote origin` شاخه‌های main و vps-worker را برگرداند (خواندن PASS)؛
+  commit و push به `origin/vps-worker` موفق بود (نوشتن PASS).
+- پروژه: فایل‌های اصلی (`bespari-core.php`، `includes/`، `assets/`، `uninstall.php`) موجود
+  و git repo روی شاخه `vps-worker` سالم است.
+- جزئیات کامل + جدول تست‌ها: `PROJECT_LOG.md` بخش TASK-20260927-006.
+
+## Notes
+- PHP روی این VPS نصب نیست — برای Taskهای فیچر (php -l، استقرار روی dev) باید نصب شود.
+- `git config user.name/user.email` محلی با noreply GitHub مالک مخزن تنظیم شد.
 
 ## Next Step
-Task بسته شد. هیچ Task فعالی وجود ندارد (BSPR-001/002/003/۰۰۴ همه کامل).
+تست بسته شد. BSPR-001 تا ۰۰۴ قبلاً کامل شده‌اند. VPS آماده دریافت Taskهای واقعی است؛
 منتظر دستور بعدی کاربر.
 
-## Files Changed (BSPR-004)
-- اصلاح: `includes/Support/Helpers.php`،
-  `includes/Modules/Production/ProductionService.php`،
-  `includes/Api/PanelRestController.php`
-
-## Important Decisions
-- الگوریتم استاندارد جلالی به‌جای patch روی الگوریتم غلط.
-- `to_jalali_date` همان تفسیر زمانی `mysql2date('Y/m/d')` را حفظ کرد (timezone پیش‌فرض PHP)
-  تا رگرسیون مرز روز پیش نیاید.
+## Files Changed (BSP-TEST-VPS)
+- `PROJECT_LOG.md` (افزودن بخش TASK-20260927-006)
+- `.claude/CURRENT_TASK.md` (این فایل)
+- `.mcp.json` (پیکربندی trello MCP — جدید روی این VPS)
+- `.claude/settings.local.json` (فعال‌سازی trello MCP + permissionها)
