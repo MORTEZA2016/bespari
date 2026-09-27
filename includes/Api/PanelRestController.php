@@ -169,6 +169,14 @@ class PanelRestController {
 			: "SELECT COUNT(*) FROM {$orders} WHERE settlement_status = 'pending'";
 		$pending = (int) $wpdb->get_var( $pend_q ); // phpcs:ignore
 
+		// آمار روز جاری (به زمان محلی وردپرس) با همان اسکوپ کاربر.
+		$today     = current_time( 'Y-m-d' );
+		$tomorrow  = gmdate( 'Y-m-d', (int) strtotime( "{$today} +1 day" ) );
+		$today_q   = $seller
+			? $wpdb->prepare( "WHERE seller_id = %d AND ordered_at >= %s AND ordered_at < %s", $seller, $today, $tomorrow )
+			: $wpdb->prepare( 'WHERE ordered_at >= %s AND ordered_at < %s', $today, $tomorrow );
+		$today_row = $wpdb->get_row( "SELECT COALESCE(SUM(total_net),0) AS net, COALESCE(SUM(total_profit),0) AS profit FROM {$orders} {$today_q}" ); // phpcs:ignore
+
 		$stat_cards = array(
 			array( 'label' => __( 'کل سفارشات', 'bespari-core' ), 'value' => number_format_i18n( (int) $stats->cnt ) ),
 			array( 'label' => __( 'مجموع فروش خالص', 'bespari-core' ), 'value' => $this->fmt( $stats->net ) ),
@@ -176,6 +184,12 @@ class PanelRestController {
 
 		if ( ! $this->is_seller_only() ) {
 			$stat_cards[] = array( 'label' => __( 'سود کل', 'bespari-core' ), 'value' => $this->fmt( $stats->profit ) );
+		}
+
+		$stat_cards[] = array( 'label' => __( 'فروش امروز', 'bespari-core' ), 'value' => $this->fmt( $today_row->net ) );
+
+		if ( ! $this->is_seller_only() ) {
+			$stat_cards[] = array( 'label' => __( 'سود امروز', 'bespari-core' ), 'value' => $this->fmt( $today_row->profit ) );
 		}
 
 		$stat_cards[] = array( 'label' => __( 'در انتظار تسویه', 'bespari-core' ), 'value' => number_format_i18n( $pending ) );
@@ -190,14 +204,16 @@ class PanelRestController {
 				esc_html( $o->customer_name ?: '—' ),
 				esc_html( $this->fmt( $o->total_net ) ),
 				$this->order_status_badge( (string) $o->status ),
+				(string) $o->ordered_at ? esc_html( Helpers::to_jalali_date( (string) $o->ordered_at ) ) : '—',
 			);
 		}
 
 		$result = array(
-			'stats'   => $stat_cards,
-			'section' => __( 'آخرین سفارشات', 'bespari-core' ),
-			'headers' => array( 'شماره', 'کانال', 'مشتری', 'خالص', 'وضعیت' ),
-			'rows'    => $out,
+			'stats'        => $stat_cards,
+			'section'      => __( 'آخرین سفارشات', 'bespari-core' ),
+			'section_link' => 'orders',
+			'headers'      => array( 'شماره', 'کانال', 'مشتری', 'خالص', 'وضعیت', 'تاریخ' ),
+			'rows'         => $out,
 		);
 
 		Optimization::set_stats( get_current_user_id(), 'dashboard_' . $scope, $result );

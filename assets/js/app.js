@@ -30,6 +30,49 @@
 		return d.innerHTML;
 	}
 
+	/**
+	 * HTML صفحه‌بندی پنجره‌ای: اول | … | جاری±۲ | … | آخر + برچسب «صفحه X از Y».
+	 */
+	function paginationHtml( pages, current ) {
+		pages = parseInt( pages, 10 ) || 1;
+		current = parseInt( current, 10 ) || 1;
+		if ( current < 1 ) { current = 1; }
+		if ( current > pages ) { current = pages; }
+
+		var html = '<div class="bp-pagination">';
+		html += '<span class="bp-pagination__info">صفحه ' + fmt( current ) + ' از ' + fmt( pages ) + '</span>';
+
+		var items = [];
+		var first = 1, last = pages;
+		// پنجره جاری بدون اول/آخر (این دو جدا نمایش داده می‌شوند).
+		var from = Math.max( first + 1, current - 2 );
+		var to = Math.min( last - 1, current + 2 );
+		var ellHead = from >= first + 3;
+		var ellTail = to <= last - 3;
+
+		items.push( first );
+		if ( ellHead ) {
+			items.push( '…' );
+		} else {
+			from = first + 1; // شکست یک‌صفحه‌ای را به پنجره می‌چسبانیم.
+		}
+		for ( var i = from; i <= ( ellTail ? to : last - 1 ); i++ ) { items.push( i ); }
+		if ( ellTail ) { items.push( '…' ); }
+		if ( last > first ) { items.push( last ); }
+
+		items.forEach( function ( p ) {
+			if ( '…' === p ) {
+				html += '<span class="bp-page bp-page--ellipsis" aria-hidden="true">…</span>';
+				return;
+			}
+			html += '<button class="bp-page' + ( p === current ? ' is-current' : '' ) +
+				'" data-page="' + p + '">' + fmt( p ) + '</button>';
+		} );
+
+		html += '</div>';
+		return html;
+	}
+
 	function getToken() {
 		try { return localStorage.getItem( TOKEN_KEY ) || ''; } catch ( e ) { return ''; }
 	}
@@ -209,6 +252,8 @@
 			return;
 		}
 		state.view = view;
+		// تغییر نما → صفحه‌بندی به اول برمی‌گردد.
+		state.page = 1;
 		// به‌روزرسانی سایدبار.
 		var nav = document.getElementById( 'bp-nav' );
 		if ( nav ) {
@@ -275,16 +320,11 @@
 		}
 
 		if ( res && res.section ) {
-			html += '<h2 class="bp-section">' + esc( res.section ) + '</h2>';
-		}
-
-		if ( res && res.pages && res.pages > 1 ) {
-			html += '<div class="bp-pagination">';
-			for ( var i = 1; i <= Math.min( res.pages, 15 ); i++ ) {
-				html += '<button class="bp-page' + ( i === ( res.page || 1 ) ? ' is-current' : '' ) +
-					'" data-page="' + i + '">' + fmt( i ) + '</button>';
+			html += '<h2 class="bp-section">' + esc( res.section );
+			if ( res.section_link ) {
+				html += '<a class="bp-section__link" href="#/' + esc( res.section_link ) + '">مشاهده همه</a>';
 			}
-			html += '</div>';
+			html += '</h2>';
 		}
 
 		var headers = ( res && res.headers ) || [];
@@ -304,10 +344,14 @@
 		}
 		html += '</tbody></table></div>';
 
+		if ( res && res.pages && res.pages > 1 ) {
+			html += paginationHtml( res.pages, res.page || 1 );
+		}
+
 		content.innerHTML = html;
 
 		// کلیک صفحه‌بندی.
-		content.querySelectorAll( '.bp-page' ).forEach( function ( b ) {
+		content.querySelectorAll( 'button.bp-page' ).forEach( function ( b ) {
 			b.addEventListener( 'click', function () {
 				state.page = parseInt( b.dataset.page, 10 ) || 1;
 				loadView( state.view );
@@ -1169,12 +1213,7 @@
 		html += '</tbody></table></div>';
 
 		if ( res && res.pages && res.pages > 1 ) {
-			html += '<div class="bp-pagination">';
-			for ( var i = 1; i <= Math.min( res.pages, 15 ); i++ ) {
-				html += '<button class="bp-page' + ( i === ( res.page || 1 ) ? ' is-current' : '' ) +
-					'" data-page="' + i + '">' + fmt( i ) + '</button>';
-			}
-			html += '</div>';
+			html += paginationHtml( res.pages, res.page || 1 );
 		}
 
 		content.innerHTML = html;
@@ -1213,7 +1252,7 @@
 		} );
 
 		// صفحه‌بندی.
-		content.querySelectorAll( '.bp-page' ).forEach( function ( b ) {
+		content.querySelectorAll( 'button.bp-page' ).forEach( function ( b ) {
 			b.addEventListener( 'click', function () {
 				state.page = parseInt( b.dataset.page, 10 ) || 1;
 				renderCrud( content, crudState.view );
