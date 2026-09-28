@@ -11,6 +11,7 @@
 namespace Bespari\Api;
 
 use Bespari\Modules\Brand\BrandService;
+use Bespari\Modules\Channel\ChannelService;
 use Bespari\Modules\Pricing\PricingRuleService;
 use Bespari\Modules\Settlement\SettlementService;
 use Bespari\Modules\Payout\PayoutService;
@@ -38,6 +39,7 @@ class ErpRestController {
 	private function features(): array {
 		return array(
 			'brands'          => 'brands',
+			'channels'        => 'channels',
 			'pricing'         => 'pricing',
 			'settlements'     => 'settlements',
 			'payouts'         => 'payouts',
@@ -283,6 +285,138 @@ class ErpRestController {
 
 	private function delete_brands( int $id ): array {
 		$service = new BrandService();
+		$result  = $service->delete( $id );
+
+		if ( is_wp_error( $result ) ) {
+			return array( 'ok' => false, 'message' => $result->get_error_message() );
+		}
+
+		return array( 'ok' => true );
+	}
+
+	/* ================= Channels ================= */
+
+	private function read_channels( array $args ): array {
+		global $wpdb;
+		$service = new ChannelService();
+		$channels = $service->list();
+
+		$s = isset( $args['s'] ) ? trim( (string) $args['s'] ) : '';
+
+		// شمارش سفارش‌ها و برندهای مرتبط (یک کوئری برای هر کافی است).
+		$orders = Helpers::table( 'orders' );
+		$brand_channels = Helpers::table( 'brand_channels' );
+
+		$order_counts = array();
+		$order_rows   = $wpdb->get_results( "SELECT channel_id, COUNT(*) AS cnt FROM {$orders} GROUP BY channel_id" ); // phpcs:ignore
+		if ( $order_rows ) {
+			foreach ( $order_rows as $r ) {
+				$order_counts[ (int) $r->channel_id ] = (int) $r->cnt;
+			}
+		}
+
+		$brand_counts = array();
+		$brand_rows   = $wpdb->get_results( "SELECT channel_id, COUNT(*) AS cnt FROM {$brand_channels} GROUP BY channel_id" ); // phpcs:ignore
+		if ( $brand_rows ) {
+			foreach ( $brand_rows as $r ) {
+				$brand_counts[ (int) $r->channel_id ] = (int) $r->cnt;
+			}
+		}
+
+		$rows       = array();
+		$row_values = array();
+
+		foreach ( $channels as $ch ) {
+			if ( '' !== $s && false === stripos( $ch->name, $s ) ) {
+				continue;
+			}
+
+			$status_badge = (int) $ch->status ? $this->badge_channel_status( 'active' ) : $this->badge_channel_status( 'inactive' );
+
+			$rows[] = array(
+				$ch->id,
+				esc_html( $ch->name ),
+				esc_html( $ch->settlement_label() ),
+				esc_html( number_format_i18n( (float) $ch->commission_percent ) ) . '٪',
+				number_format_i18n( $brand_counts[ $ch->id ] ?? 0 ),
+				number_format_i18n( $order_counts[ $ch->id ] ?? 0 ),
+				$status_badge,
+			);
+
+			$row_values[ $ch->id ] = array(
+				'name'              => $ch->name,
+				'settlement_mode'   => $ch->settlement_mode,
+				'commission_percent'=> (float) $ch->commission_percent,
+				'is_marketplace'    => (int) $ch->is_marketplace,
+				'status'            => (int) $ch->status,
+				'description'       => $ch->description,
+			);
+		}
+
+		$settlement_options = array(
+			array( 'value' => 'invoice',   'label' => __( 'فاکتور به فاکتور', 'bespari-core' ) ),
+			array( 'value' => 'batch',     'label' => __( 'محموله به محموله', 'bespari-core' ) ),
+			array( 'value' => 'statement', 'label' => __( 'صورت‌حساب به صورت‌حساب', 'bespari-core' ) ),
+		);
+
+		return array(
+			'ok'        => true,
+			'title'     => __( 'کانال‌های فروش', 'bespari-core' ),
+			'headers'   => array(
+				__( 'شناسه', 'bespari-core' ),
+				__( 'نام کانال', 'bespari-core' ),
+				__( 'حالت تسویه', 'bespari-core' ),
+				__( 'پورسانت', 'bespari-core' ),
+				__( 'برندها', 'bespari-core' ),
+				__( 'سفارشات', 'bespari-core' ),
+				__( 'وضعیت', 'bespari-core' ),
+			),
+			'rows'      => $rows,
+			'rowValues' => $row_values,
+			'pages'     => 1,
+			'page'      => 1,
+			'form'      => array(
+				'fields' => array(
+					array( 'name' => 'name', 'label' => __( 'نام کانال', 'bespari-core' ), 'type' => 'text', 'required' => true ),
+					array( 'name' => 'settlement_mode', 'label' => __( 'حالت تسویه', 'bespari-core' ), 'type' => 'select', 'options' => $settlement_options ),
+					array( 'name' => 'commission_percent', 'label' => __( 'درصد پورسانت کانال (٪)', 'bespari-core' ), 'type' => 'number' ),
+					array( 'name' => 'is_marketplace', 'label' => __( 'این کانال یک مارکت‌پلیس است', 'bespari-core' ), 'type' => 'checkbox' ),
+					array( 'name' => 'status', 'label' => __( 'فعال', 'bespari-core' ), 'type' => 'checkbox' ),
+					array( 'name' => 'description', 'label' => __( 'توضیحات', 'bespari-core' ), 'type' => 'textarea' ),
+				),
+			),
+			'rowActions' => array(
+				'edit'   => __( 'ویرایش', 'bespari-core' ),
+				'delete' => __( 'حذف', 'bespari-core' ),
+			),
+		);
+	}
+
+	/**
+	 * بج وضعیت کانال.
+	 */
+	private function badge_channel_status( string $status ): string {
+		$map = array(
+			'active'   => array( __( 'فعال', 'bespari-core' ), 'success' ),
+			'inactive' => array( __( 'غیرفعال', 'bespari-core' ), 'muted' ),
+		);
+		$m   = $map[ $status ] ?? array( $status, 'muted' );
+		return '<span class="bp-badge bp-badge--' . esc_attr( $m[1] ) . '">' . esc_html( $m[0] ) . '</span>';
+	}
+
+	private function write_channels( int $id, array $input ): array {
+		$service = new ChannelService();
+		$result  = $id ? $service->update( $id, $input ) : $service->create( $input );
+
+		if ( is_wp_error( $result ) ) {
+			return array( 'ok' => false, 'message' => $result->get_error_message() );
+		}
+
+		return array( 'ok' => true, 'id' => $result );
+	}
+
+	private function delete_channels( int $id ): array {
+		$service = new ChannelService();
 		$result  = $service->delete( $id );
 
 		if ( is_wp_error( $result ) ) {

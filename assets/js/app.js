@@ -1093,7 +1093,7 @@
 
 	// viewهای سرو شده از ErpRestController.
 	var ERP_VIEWS = {
-		brands: true, pricing: true, settlements: true, payouts: true,
+		brands: true, channels: true, pricing: true, settlements: true, payouts: true,
 		shipments: true, returns: true, requests: true, accounting: true,
 		invoices: true, agents: true, settings: true, seller_dashboard: true,
 		users: true
@@ -1282,6 +1282,12 @@
 				var action = b.dataset.action;
 				var label = b.textContent;
 
+				if ( 'edit' === action ) {
+					var values = ( res && res.rowValues && res.rowValues[ id ] ) || {};
+					openCrudModal( content, res.form, id, values );
+					return;
+				}
+
 				if ( 'delete' === action ) {
 					if ( ! window.confirm( 'آیا از حذف این مورد مطمئن هستید؟' ) ) { return; }
 				}
@@ -1351,7 +1357,8 @@
 				( field.options || [] ).forEach( function ( o ) {
 					var val = String( o.value !== undefined ? o.value : o );
 					var lbl = o.label !== undefined ? o.label : o;
-					html += '<option value="' + esc( val ) + '">' + esc( lbl ) + '</option>';
+					var sel = ( String( v ) === val ) ? ' selected' : '';
+					html += '<option value="' + esc( val ) + '"' + sel + '>' + esc( lbl ) + '</option>';
 				} );
 				html += '</select>';
 				break;
