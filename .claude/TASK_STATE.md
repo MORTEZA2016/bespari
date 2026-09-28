@@ -78,13 +78,13 @@ https://trello.com/c/TT264HBV
 - harness `test-employees.php`: ۲۳ بررسی، ۰ شکست (roles بدون seller، is_employee، mime sniffing عکس PNG/JPEG/SVG، bad data URI/base64، محدودیت حجم، non-employee، photo_url + fallback avatar، delete_photo، sanitize_mobile، get_form_values).
 
 ## Last Commit
-(filled after commit)
+6b1a5d8 — feat(BSPR-MENU-03): employees & granular permissions module (7 files, +1322/-38)
 
 ## Last Push
-(filled after push)
+SUCCESS — 997295b..6b1a5d8 HEAD -> vps-worker (2026-09-28)
 
 ## Next Action
-commit + push به `origin/vps-worker` و سپس انتقال کارت Trello به Review.
+انتقال کارت Trello به Review انجام شد. منتظر تأیید کاربر (انتقال به Done) — Task جدید برندار.
 
 ## Previous Task
 BSPR-MENU-02 — کانال‌های فروش — DONE — commit 562473d (تأیید 2026-09-28T17:30:56Z)
