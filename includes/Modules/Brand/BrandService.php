@@ -131,6 +131,21 @@ class BrandService {
 			return new \WP_Error( 'not_found', __( 'برند یافت نشد.', 'bespari-core' ) );
 		}
 
+		// جلوگیری از یتیم شدن محصولات و بازاریاب‌های متصل.
+		$counts = $this->repo->count_relations( array( $id ) )[ $id ] ?? array();
+
+		if ( ( $counts['products'] ?? 0 ) > 0 || ( $counts['sellers'] ?? 0 ) > 0 ) {
+			return new \WP_Error(
+				'has_dependencies',
+				sprintf(
+					/* translators: 1: تعداد محصولات، 2: تعداد بازاریاب‌ها */
+					__( 'این برند %1$s محصول و %2$s بازاریاب دارد. ابتدا آن‌ها را به برند دیگری منتقل کنید.', 'bespari-core' ),
+					number_format( (float) ( $counts['products'] ?? 0 ) ),
+					number_format( (float) ( $counts['sellers'] ?? 0 ) )
+				)
+			);
+		}
+
 		$ok = $this->repo->delete( $id );
 
 		if ( $ok ) {

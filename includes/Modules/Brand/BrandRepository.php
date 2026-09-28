@@ -72,6 +72,51 @@ class BrandRepository extends BaseRepository {
 	}
 
 	/**
+	 * شمارش محصولات، بازاریاب‌ها و کانال‌های فعال برندها (یکباره).
+	 *
+	 * @param int[] $brand_ids آی‌دی برندها.
+	 * @return array<int, array{products:int, sellers:int, channels:int}>
+	 */
+	public function count_relations( array $brand_ids ): array {
+		global $wpdb;
+
+		$ids = array_filter( array_map( 'intval', $brand_ids ) );
+		$out = array();
+
+		if ( ! $ids ) {
+			return $out;
+		}
+
+		// لیست از قبل عددی و امن است.
+		$list = implode( ',', $ids );
+
+		$queries = array(
+			'products' => "SELECT brand_id, COUNT(*) AS c FROM " . Helpers::table( 'products' ) .
+				" WHERE brand_id IN ({$list}) GROUP BY brand_id",
+			'sellers'  => "SELECT brand_id, COUNT(DISTINCT user_id) AS c FROM " . Helpers::table( 'seller_brands' ) .
+				" WHERE brand_id IN ({$list}) GROUP BY brand_id",
+			'channels' => "SELECT brand_id, COUNT(*) AS c FROM " . Helpers::table( 'brand_channels' ) .
+				" WHERE brand_id IN ({$list}) AND is_active = 1 GROUP BY brand_id",
+		);
+
+		foreach ( $ids as $id ) {
+			$out[ $id ] = array( 'products' => 0, 'sellers' => 0, 'channels' => 0 );
+		}
+
+		foreach ( $queries as $key => $sql ) {
+			$rows = $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			foreach ( (array) $rows as $r ) {
+				$brand_id = (int) $r->brand_id;
+				if ( isset( $out[ $brand_id ] ) ) {
+					$out[ $brand_id ][ $key ] = (int) $r->c;
+				}
+			}
+		}
+
+		return $out;
+	}
+
+	/**
 	 * ذخیره نگاشت برند به کانال‌ها (جایگزینی کامل).
 	 *
 	 * @param int   $brand_id    آی‌دی برند.

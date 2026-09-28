@@ -11,6 +11,7 @@
 namespace Bespari\Api;
 
 use Bespari\Modules\Brand\BrandService;
+use Bespari\Modules\Brand\BrandRepository;
 use Bespari\Modules\Pricing\PricingRuleService;
 use Bespari\Modules\Settlement\SettlementService;
 use Bespari\Modules\Payout\PayoutService;
@@ -298,15 +299,54 @@ class ErpRestController {
 		$service = new BrandService();
 		$brands  = $service->list();
 
-		$rows = array();
+		$counts = ( new BrandRepository() )->count_relations(
+			array_map( static fn( $b ) => (int) $b->id, $brands )
+		);
+
+		$channel_options = array();
+		foreach ( ( new \Bespari\Modules\Channel\ChannelRepository() )->get_all() as $c ) {
+			$channel_options[] = array( 'value' => (string) $c->id, 'label' => $c->name );
+		}
+
+		$rows   = array();
+		$values = array();
 		foreach ( $brands as $b ) {
-			$rows[] = array( $b->id, esc_html( $b->name ), esc_html( $b->slug ), (int) $b->status );
+			$c = $counts[ $b->id ] ?? array( 'products' => 0, 'sellers' => 0, 'channels' => 0 );
+
+			$status = $b->status
+				? '<span class="bp-badge bp-badge--success">' . esc_html__( 'فعال', 'bespari-core' ) . '</span>'
+				: '<span class="bp-badge bp-badge--muted">' . esc_html__( 'غیرفعال', 'bespari-core' ) . '</span>';
+
+			$rows[] = array(
+				$b->id,
+				esc_html( $b->name ),
+				$status,
+				$this->count_badge( (int) ( $c['products'] ?? 0 ) ),
+				$this->count_badge( (int) ( $c['sellers'] ?? 0 ) ),
+				$this->count_badge( (int) ( $c['channels'] ?? 0 ) ),
+			);
+
+			// مقادیر اولیه برای فرم ویرایش.
+			$values[ $b->id ] = array(
+				'name'        => $b->name,
+				'status'      => $b->status ? '1' : '0',
+				'logo'        => $b->logo,
+				'description' => $b->description,
+				'channel_ids' => array_map( 'strval', $b->channel_ids ),
+			);
 		}
 
 		return array(
 			'ok'        => true,
 			'title'     => __( 'برندهای فروش', 'bespari-core' ),
-			'headers'   => array( __( 'شناسه', 'bespari-core' ), __( 'نام', 'bespari-core' ), __( 'نامک', 'bespari-core' ), __( 'وضعیت', 'bespari-core' ) ),
+			'headers'   => array(
+				__( 'شناسه', 'bespari-core' ),
+				__( 'نام برند', 'bespari-core' ),
+				__( 'وضعیت', 'bespari-core' ),
+				__( 'محصولات', 'bespari-core' ),
+				__( 'بازاریاب‌ها', 'bespari-core' ),
+				__( 'کانال‌های فروش', 'bespari-core' ),
+			),
 			'rows'      => $rows,
 			'pages'     => 1,
 			'page'      => 1,
@@ -316,10 +356,32 @@ class ErpRestController {
 					array( 'name' => 'status', 'label' => __( 'فعال', 'bespari-core' ), 'type' => 'checkbox' ),
 					array( 'name' => 'logo', 'label' => __( 'لوگو (URL)', 'bespari-core' ), 'type' => 'text' ),
 					array( 'name' => 'description', 'label' => __( 'توضیحات', 'bespari-core' ), 'type' => 'textarea' ),
+					array(
+						'name'    => 'channel_ids',
+						'label'   => __( 'کانال‌های فروش', 'bespari-core' ),
+						'type'    => 'checkboxes',
+						'options' => $channel_options,
+					),
 				),
+				'values' => $values,
 			),
-			'rowActions' => array( 'delete' => __( 'حذف', 'bespari-core' ) ),
+			'rowActions' => array(
+				'edit'   => __( 'ویرایش', 'bespari-core' ),
+				'delete' => __( 'حذف', 'bespari-core' ),
+			),
 		);
+	}
+
+	/**
+	 * نمایش یک عدد به‌صورت بج قابل‌خواندن در جدول.
+	 *
+	 * @param int $n عدد.
+	 * @return string
+	 */
+	private function count_badge( int $n ): string {
+		$class = $n > 0 ? 'bp-badge--info' : 'bp-badge--muted';
+
+		return '<span class="bp-badge ' . $class . '">' . esc_html( number_format( (float) $n ) ) . '</span>';
 	}
 
 	private function write_brands( int $id, array $input ): array {
@@ -330,7 +392,7 @@ class ErpRestController {
 			return array( 'ok' => false, 'message' => $result->get_error_message() );
 		}
 
-		return array( 'ok' => true, 'id' => $result );
+		return array( 'ok' => true, 'id' => $id ? $id : (int) $result );
 	}
 
 	private function delete_brands( int $id ): array {
