@@ -564,3 +564,53 @@ a:hover { color: var(--bp-primary-hover); }
 /* توکن / راز یک‌بار */
 .bp-token { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 .bp-token code { flex: 1; font-family: monospace; font-size: 12px; background: var(--bp-bg-secondary,#f9fafb); border: 1px dashed var(--bp-border,#d1d5db); border-radius: 8px; padding: 10px; word-break: break-all; direction: ltr; }
+
+/* ===== BSPR-MENU-03: کارمندان و دسترسی‌ها ===== */
+
+/* مودال عریض برای فرم دسترسی‌ها */
+.bp-modal__dialog--wide { width: min(760px, 94vw); }
+
+/* راهنمای فیلد */
+.bp-field__help { font-size: 11.5px; color: var(--bp-muted,#8a94a6); margin-top: 5px; line-height: 1.5; }
+
+/* عکس / آواتار */
+.bp-avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+    background: var(--bp-bg-secondary,#eef0f4); color: var(--bp-muted,#8a94a6);
+    font-size: 20px; font-weight: 700; overflow: hidden; flex: none;
+}
+.bp-avatar--sm { width: 34px; height: 34px; font-size: 13px; border: 1px solid var(--bp-border,#e5e7eb); }
+.bp-avatar--empty { background: var(--bg-secondary,#eef0f4); }
+.bp-table td img { display: block; margin: 0 auto; }
+
+.bp-photo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bp-photo__file { font-size: 12px; max-width: 220px; }
+.bp-photo__hint { width: 100%; font-size: 11.5px; color: var(--bp-muted,#8a94a6); }
+
+/* گروه چک‌باکس (انتخاب موجودیت‌ها) */
+.bp-checklist {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 6px 12px; max-height: 180px; overflow: auto;
+    border: 1px solid var(--bp-border,#e5e7eb); border-radius: 10px; padding: 10px 12px;
+    background: var(--bp-input-bg,#fff);
+}
+.bp-checklist__item { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; padding: 3px 0; }
+.bp-checklist__item input { width: auto; margin: 0; accent-color: var(--bp-primary,#6366f1); }
+.bp-checklist .bp-empty { grid-column: 1 / -1; color: var(--bp-muted,#8a94a6); font-size: 12.5px; padding: 6px 0; }
+
+/* ماتریس دسترسی منوها */
+.bp-perm {
+    border: 1px solid var(--bp-border,#e5e7eb); border-radius: 10px; padding: 6px 12px;
+    max-height: 300px; overflow: auto; background: var(--bp-input-bg,#fff);
+}
+.bp-perm__row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 7px 0; border-bottom: 1px solid var(--bp-border,#f0f1f4);
+}
+.bp-perm__row:last-child { border-bottom: none; }
+.bp-perm__label { font-size: 13px; color: var(--bp-text,#374151); font-weight: 500; }
+.bp-perm__select {
+    width: auto; min-width: 120px; padding: 6px 10px; border: 1px solid var(--bp-border,#d1d5db);
+    border-radius: 8px; font: inherit; font-size: 12.5px; background: var(--bp-input-bg,#fff);
+}

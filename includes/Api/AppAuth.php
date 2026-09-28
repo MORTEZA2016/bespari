@@ -10,6 +10,8 @@
 
 namespace Bespari\Api;
 
+use Bespari\Modules\User\PermissionService;
+
 // جلوگیری از دسترسی مستقیم.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -50,6 +52,7 @@ class AppAuth {
 			'settings'        => array( __( 'تنظیمات', 'bespari-core' ), 'bespari_manage_settings', 'dashicons-admin-generic' ),
 			'seller_dashboard'=> array( __( 'داشبورد بازاریاب', 'bespari-core' ), 'bespari_seller_view', 'dashicons-businessperson' ),
 			'users'           => array( __( 'کاربران', 'bespari-core' ), 'bespari_manage_users', 'dashicons-admin-users' ),
+			'employees'       => array( __( 'کارمندان و دسترسی‌ها', 'bespari-core' ), 'bespari_manage_users', 'dashicons-id-alt' ),
 		);
 	}
 
@@ -221,7 +224,7 @@ class AppAuth {
 	}
 
 	/**
-	 * منوهای مجاز برای کاربر.
+	 * منوهای مجاز برای کاربر — بر اساس caps نقش و grant های دقیق PermissionService.
 	 *
 	 * @param \WP_User $user کاربر.
 	 * @return array لیست [key, label, icon].
@@ -230,7 +233,7 @@ class AppAuth {
 		$allowed = array();
 
 		foreach ( self::menus() as $key => $item ) {
-			if ( self::user_can( $user, $item[1] ) ) {
+			if ( 'none' !== PermissionService::menu_mode( $user, $key ) ) {
 				$allowed[] = array(
 					'key'   => $key,
 					'label' => $item[0],

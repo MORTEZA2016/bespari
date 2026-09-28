@@ -21,6 +21,8 @@ use Bespari\Modules\Request\RequestService;
 use Bespari\Modules\Accounting\AccountingService;
 use Bespari\Modules\Agent\AgentService;
 use Bespari\Modules\User\UserService;
+use Bespari\Modules\User\EmployeeService;
+use Bespari\Modules\User\PermissionService;
 use Bespari\Modules\Order\OrderRepository;
 use Bespari\Modules\Seller\SellerRepository;
 use Bespari\Modules\Commission\CommissionRepository;
@@ -52,6 +54,7 @@ class ErpRestController {
 			'settings'        => 'settings',
 			'seller_dashboard'=> 'seller_dashboard',
 			'users'           => 'users',
+			'employees'       => 'employees',
 		);
 	}
 
@@ -113,7 +116,9 @@ class ErpRestController {
 	}
 
 	/**
-	 * احراز هویت + گارد cap منو.
+	 * احراز هویت + گارد دسترسی: caps منو + حالت دقیق PermissionService.
+	 *
+	 * GET و preview → نیاز به حالت read؛ سایر متدها (نوشتن/حذف/اکشن) → نیاز به edit.
 	 */
 	public function can_access( \WP_REST_Request $request ): bool {
 		if ( ! AppAuth::authenticate( $request ) ) {
@@ -127,7 +132,12 @@ class ErpRestController {
 			return false;
 		}
 
-		return AppAuth::user_can( wp_get_current_user(), $menus[ $feature ][1] );
+		$route = (string) $request->get_route();
+		$mode  = ( 'GET' === $request->get_method() || '/preview' === substr( $route, -strlen( '/preview' ) ) )
+			? PermissionService::MODE_READ
+			: PermissionService::MODE_EDIT;
+
+		return PermissionService::can_menu( wp_get_current_user(), $feature, $mode );
 	}
 
 	/**
@@ -302,6 +312,20 @@ class ErpRestController {
 		$channels = $service->list();
 
 		$s = isset( $args['s'] ) ? trim( (string) $args['s'] ) : '';
+
+		// محدودسازی لیست کانال‌ها بر اساس دسترسی دقیق کاربر جاری.
+		$scope = PermissionService::allowed_ids( wp_get_current_user(), 'channels' );
+
+		if ( ! PermissionService::can_view_channels( wp_get_current_user() ) ) {
+			$channels = array();
+		} elseif ( null !== $scope ) {
+			$channels = array_filter(
+				$channels,
+				static function ( $ch ) use ( $scope ) {
+					return in_array( (int) $ch->id, $scope, true );
+				}
+			);
+		}
 
 		// شمارش سفارش‌ها و برندهای مرتبط (یک کوئری برای هر کافی است).
 		$orders = Helpers::table( 'orders' );
@@ -1268,5 +1292,150 @@ class ErpRestController {
 		}
 
 		return array( 'ok' => true );
+	}
+
+	/* ================= Employees & Permissions ================= */
+
+	private function read_employees( array $args ): array {
+		$service = new EmployeeService();
+		$result  = $service->list( $args );
+
+		$role_options = array();
+		foreach ( EmployeeService::roles() as $key => $label ) {
+			$role_options[] = array( 'value' => $key, 'label' => $label );
+		}
+
+		$menu_subjects = array();
+		foreach ( PermissionService::menu_subjects() as $key => $label ) {
+			$menu_subjects[] = array( 'value' => $key, 'label' => $label );
+		}
+
+		$rows        = array();
+		$row_values  = array();
+
+		foreach ( $result['rows'] as $e ) {
+			$initial = (string) ( $e['first_name'] ? $e['first_name'] : $e['login'] );
+			$initial = function_exists( 'mb_substr' ) ? mb_substr( $initial, 0, 1 ) : substr( $initial, 0, 1 );
+
+			$photo = ! empty( $e['photo'] )
+				? '<img src="' . esc_url( $e['photo'] ) . '" alt="" class="bp-avatar bp-avatar--sm">'
+				: '<span class="bp-avatar bp-avatar--sm bp-avatar--empty">' . esc_html( $initial ) . '</span>';
+
+			$rows[] = array(
+				$e['id'],
+				$photo,
+				esc_html( trim( (string) $e['first_name'] . ' ' . (string) $e['last_name'] ) ),
+				esc_html( $e['login'] ),
+				esc_html( $e['mobile'] ? $e['mobile'] : '—' ),
+				esc_html( $e['email'] ),
+				esc_html( $e['role_label'] ),
+				esc_html( $e['permissions'] ),
+			);
+
+			$row_values[ $e['id'] ] = $service->get_form_values( (int) $e['id'] );
+		}
+
+		// فیلدهای موجودیت‌ها (دسترسی به داده).
+		$entity_fields = array();
+		foreach ( PermissionService::entity_subjects() as $key => $info ) {
+			$entity_fields[] = array(
+				'name'    => 'allowed_' . $key,
+				'label'   => $info[0],
+				'type'    => 'checkbox_group',
+				'options' => PermissionService::entity_options( $key ),
+				'help'    => $info[1],
+			);
+		}
+
+		return array(
+			'ok'        => true,
+			'title'     => __( 'کارمندان و دسترسی‌ها', 'bespari-core' ),
+			'headers'   => array(
+				__( 'شناسه', 'bespari-core' ),
+				__( 'عکس', 'bespari-core' ),
+				__( 'نام و نام خانوادگی', 'bespari-core' ),
+				__( 'نام کاربری', 'bespari-core' ),
+				__( 'موبایل', 'bespari-core' ),
+				__( 'ایمیل', 'bespari-core' ),
+				__( 'نقش', 'bespari-core' ),
+				__( 'دسترسی‌ها', 'bespari-core' ),
+			),
+			'rows'      => $rows,
+			'rowValues' => $row_values,
+			'pages'     => $result['pages'],
+			'page'      => $result['page'],
+			'filters'   => array(
+				array( 'name' => 'role', 'type' => 'select', 'options' => $role_options, 'label' => __( 'نقش', 'bespari-core' ) ),
+			),
+			'form'      => array(
+				'wide'   => true,
+				'fields' => array_merge(
+					array(
+						array( 'name' => 'photo', 'label' => __( 'عکس', 'bespari-core' ), 'type' => 'photo' ),
+						array( 'name' => 'user_login', 'label' => __( 'نام کاربری', 'bespari-core' ), 'type' => 'text', 'required' => true ),
+						array( 'name' => 'first_name', 'label' => __( 'نام', 'bespari-core' ), 'type' => 'text' ),
+						array( 'name' => 'last_name', 'label' => __( 'نام خانوادگی', 'bespari-core' ), 'type' => 'text' ),
+						array( 'name' => 'mobile', 'label' => __( 'موبایل', 'bespari-core' ), 'type' => 'text' ),
+						array( 'name' => 'email', 'label' => __( 'ایمیل', 'bespari-core' ), 'type' => 'text', 'required' => true ),
+						array( 'name' => 'role', 'label' => __( 'نقش', 'bespari-core' ), 'type' => 'select', 'options' => $role_options, 'required' => true ),
+						array( 'name' => 'password', 'label' => __( 'رمز عبور (خالی = خودکار)', 'bespari-core' ), 'type' => 'password' ),
+						array(
+							'name'        => 'permissions',
+							'label'       => __( 'دسترسی به منوها', 'bespari-core' ),
+							'type'        => 'permission_matrix',
+							'options'     => $menu_subjects,
+							'modeOptions' => PermissionService::modes(),
+							'help'        => __( 'برای هر منو حالت دسترسی را تعیین کنید.', 'bespari-core' ),
+						),
+						array( 'name' => 'channel_view', 'label' => __( 'نمایش کانال‌های فروش', 'bespari-core' ), 'type' => 'checkbox' ),
+					),
+					$entity_fields
+				),
+			),
+			'rowActions' => array(
+				'edit'             => __( 'ویرایش', 'bespari-core' ),
+				'delete_photo'     => __( 'حذف عکس', 'bespari-core' ),
+				'reset_permissions'=> __( 'بازنشانی دسترسی‌ها', 'bespari-core' ),
+				'delete'           => __( 'حذف', 'bespari-core' ),
+			),
+		);
+	}
+
+	private function write_employees( int $id, array $input ): array {
+		$service = new EmployeeService();
+		$result  = $id ? $service->update( $id, $input ) : $service->create( $input );
+
+		if ( is_wp_error( $result ) ) {
+			return array( 'ok' => false, 'message' => $result->get_error_message() );
+		}
+
+		return array( 'ok' => true, 'id' => $result );
+	}
+
+	private function delete_employees( int $id ): array {
+		$service = new EmployeeService();
+		$result  = $service->delete( $id );
+
+		if ( is_wp_error( $result ) ) {
+			return array( 'ok' => false, 'message' => $result->get_error_message() );
+		}
+
+		return array( 'ok' => true );
+	}
+
+	private function action_employees( int $id, string $action, array $params ): array {
+		$service = new EmployeeService();
+
+		if ( 'delete_photo' === $action ) {
+			$service->delete_photo( $id );
+			return array( 'ok' => true );
+		}
+
+		if ( 'reset_permissions' === $action ) {
+			PermissionService::clear_grants( $id );
+			return array( 'ok' => true );
+		}
+
+		return array( 'ok' => false, 'message' => __( 'عملیات نامعتبر است.', 'bespari-core' ) );
 	}
 }

@@ -1096,7 +1096,7 @@
 		brands: true, channels: true, pricing: true, settlements: true, payouts: true,
 		shipments: true, returns: true, requests: true, accounting: true,
 		invoices: true, agents: true, settings: true, seller_dashboard: true,
-		users: true
+		users: true, employees: true
 	};
 
 	var crudState = { view: '', filters: {} };
@@ -1377,11 +1377,70 @@
 			case 'date':
 				html = '<input type="date" class="bp-input" id="' + name + '" value="' + esc( v ) + '"' + req + '>';
 				break;
+			case 'photo':
+				var hasImg = !!( v && String( v ).length );
+				var avatar = hasImg
+					? '<img id="' + name + '-img" class="bp-avatar" src="' + esc( v ) + '" alt="">'
+					: '<span id="' + name + '-img" class="bp-avatar bp-avatar--empty">+</span>';
+				html = '<div class="bp-photo">' + avatar +
+					'<input type="file" accept="image/*" class="bp-photo__file" id="' + name + '-file" data-photo-field="' + name + '">' +
+					'<input type="hidden" id="' + name + '" value="' + esc( hasImg ? v : '' ) + '">' +
+					'<div class="bp-photo__hint">JPG / PNG / WEBP / GIF — حداکثر ۲ مگابایت</div>' +
+					'</div>';
+				break;
+			case 'checkbox_group':
+				var picked = toIdList( v );
+				html = '<div class="bp-checklist" id="' + name + '">';
+				if ( ! ( field.options || [] ).length ) {
+					html += '<div class="bp-empty">موردی برای انتخاب وجود ندارد.</div>';
+				}
+				( field.options || [] ).forEach( function ( o ) {
+					var val = String( o.value !== undefined ? o.value : o );
+					var lbl = o.label !== undefined ? o.label : o;
+					var on = ( picked.indexOf( val ) > -1 || picked.indexOf( Number( val ) ) > -1 );
+					html += '<label class="bp-checklist__item"><input type="checkbox" value="' + esc( val ) + '"' +
+						( on ? ' checked' : '' ) + '><span>' + esc( lbl ) + '</span></label>';
+				} );
+				html += '</div>';
+				break;
+			case 'permission_matrix':
+				var modes = ( field.modeOptions && typeof field.modeOptions === 'object' )
+					? field.modeOptions
+					: { none: 'بدون دسترسی', read: 'خواندن', edit: 'ویرایش' };
+				var granted = ( v && typeof v === 'object' ) ? v : {};
+				html = '<div class="bp-perm" id="' + name + '">';
+				( field.options || [] ).forEach( function ( o ) {
+					var key = String( o.value !== undefined ? o.value : o );
+					var lbl = o.label !== undefined ? o.label : o;
+					var sel = granted[ key ] || 'none';
+					html += '<div class="bp-perm__row"><span class="bp-perm__label">' + esc( lbl ) + '</span>' +
+						'<select class="bp-perm__select" data-perm-key="' + esc( key ) + '">';
+					Object.keys( modes ).forEach( function ( m ) {
+						html += '<option value="' + esc( m ) + '"' + ( m === sel ? ' selected' : '' ) + '>' +
+							esc( modes[ m ] ) + '</option>';
+					} );
+					html += '</select></div>';
+				} );
+				html += '</div>';
+				break;
 			default:
 				html = '<input type="text" class="bp-input" id="' + name + '" value="' + esc( v ) + '"' + req + '>';
 		}
 
-		return '<div class="bp-field"><label for="' + name + '">' + esc( field.label ) + '</label>' + html + '</div>';
+		var help = field.help ? '<div class="bp-field__help">' + esc( field.help ) + '</div>' : '';
+
+		return '<div class="bp-field"><label for="' + name + '">' + esc( field.label ) + '</label>' + html + help + '</div>';
+	}
+
+	/**
+	 * تبدیل مقدار فیلد به لیست شناسه (آرایه یا آبجکت).
+	 */
+	function toIdList( v ) {
+		if ( Array.isArray( v ) ) { return v.map( String ); }
+		if ( v && typeof v === 'object' ) {
+			return Object.keys( v ).map( function ( k ) { return String( v[ k ] ); } );
+		}
+		return [];
 	}
 
 	function readFieldValue( field ) {
@@ -1389,13 +1448,27 @@
 		if ( ! el ) { return undefined; }
 		if ( 'checkbox' === field.type ) { return el.checked; }
 		if ( 'number' === field.type ) { return el.value === '' ? '' : parseFloat( el.value ); }
+		if ( 'checkbox_group' === field.type ) {
+			var ids = [];
+			el.querySelectorAll( 'input[type="checkbox"]:checked' ).forEach( function ( c ) {
+				ids.push( c.value );
+			} );
+			return ids;
+		}
+		if ( 'permission_matrix' === field.type ) {
+			var modes = {};
+			el.querySelectorAll( '.bp-perm__select' ).forEach( function ( s ) {
+				modes[ s.dataset.permKey ] = s.value;
+			} );
+			return modes;
+		}
 		return el.value;
 	}
 
 	function openCrudModal( content, form, id, values ) {
 		var fieldsHtml = '';
 		( form.fields || [] ).forEach( function ( f ) {
-			fieldsHtml += fieldValue( f, values[ f.name ] );
+			fieldsHtml += fieldValue( f, values ? values[ f.name ] : undefined );
 		} );
 
 		var body = '<div id="bp-modal-alert"></div>' + fieldsHtml +
@@ -1403,12 +1476,56 @@
 
 		var modal = openModal( id ? 'ویرایش' : 'افزودن', body );
 
+		if ( form && form.wide ) {
+			var dialog = modal.querySelector( '.bp-modal__dialog' );
+			if ( dialog ) { dialog.classList.add( 'bp-modal__dialog--wide' ); }
+		}
+
+		// عکس انتخاب‌شده تا لحظه‌ی ذخیره به‌صورت base64 نگه داشته می‌شود.
+		var pendingPhoto = '';
+
+		modal.querySelectorAll( '.bp-photo__file' ).forEach( function ( fileInput ) {
+			fileInput.addEventListener( 'change', function () {
+				var file = fileInput.files && fileInput.files[ 0 ];
+				if ( ! file ) { return; }
+
+				if ( file.size > 2 * 1024 * 1024 ) {
+					var box = modal.querySelector( '#bp-modal-alert' );
+					if ( box ) {
+						box.innerHTML = '<div class="bp-alert bp-alert--error">حجم عکس باید کمتر از ۲ مگابایت باشد.</div>';
+					}
+					fileInput.value = '';
+					return;
+				}
+
+				var reader = new FileReader();
+				reader.onload = function () {
+					pendingPhoto = String( reader.result || '' );
+					var img = modal.querySelector( '#' + fileInput.dataset.photoField + '-img' );
+					if ( img ) {
+						if ( 'IMG' === img.tagName ) {
+							img.src = pendingPhoto;
+						} else {
+							var newImg = document.createElement( 'img' );
+							newImg.id = img.id;
+							newImg.className = 'bp-avatar';
+							newImg.src = pendingPhoto;
+							img.parentNode.replaceChild( newImg, img );
+						}
+					}
+				};
+				reader.readAsDataURL( file );
+			} );
+		} );
+
 		modal.querySelector( '#bp-modal-save' ).addEventListener( 'click', function () {
 			var btn = modal.querySelector( '#bp-modal-save' );
 			var data = {};
 			( form.fields || [] ).forEach( function ( f ) {
 				data[ f.name ] = readFieldValue( f );
 			} );
+
+			if ( pendingPhoto ) { data.photo_data = pendingPhoto; }
 
 			btn.disabled = true;
 			btn.textContent = 'در حال ذخیره…';
