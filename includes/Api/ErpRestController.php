@@ -20,6 +20,7 @@ use Bespari\Modules\Request\RequestService;
 use Bespari\Modules\Accounting\AccountingService;
 use Bespari\Modules\Agent\AgentService;
 use Bespari\Modules\User\UserService;
+use Bespari\Modules\Seller\SellerAccess;
 use Bespari\Modules\Order\OrderRepository;
 use Bespari\Modules\Seller\SellerRepository;
 use Bespari\Modules\Commission\CommissionRepository;
@@ -176,7 +177,18 @@ class ErpRestController {
 			$input = $request->get_params();
 		}
 
-		return call_user_func( array( $this, 'write_' . $method ), $id, $input );
+		$result = call_user_func( array( $this, 'write_' . $method ), $id, $input );
+
+		// پیام موفقیت پیش‌فرض با برچسب فیچر، اگر هندلر پیام نداده باشد.
+		if ( is_array( $result ) && ! empty( $result['ok'] ) && empty( $result['message'] ) ) {
+			$label = $this->feature_label( $feature );
+			if ( $label ) {
+				$result['message'] = ( $id ? '%s به‌روزرسانی شد.' : '%s با موفقیت اضافه شد.' );
+				$result['message'] = sprintf( $result['message'], $label );
+			}
+		}
+
+		return $result;
 	}
 
 	public function handle_delete( \WP_REST_Request $request ): array {
@@ -188,7 +200,16 @@ class ErpRestController {
 			return array( 'ok' => false, 'message' => __( 'فیچر نامعتبر است.', 'bespari-core' ) );
 		}
 
-		return call_user_func( array( $this, 'delete_' . $method ), $id );
+		$result = call_user_func( array( $this, 'delete_' . $method ), $id );
+
+		if ( is_array( $result ) && ! empty( $result['ok'] ) && empty( $result['message'] ) ) {
+			$label = $this->feature_label( $feature );
+			if ( $label ) {
+				$result['message'] = sprintf( '%s حذف شد.', $label );
+			}
+		}
+
+		return $result;
 	}
 
 	public function handle_action( \WP_REST_Request $request ): array {
@@ -206,7 +227,38 @@ class ErpRestController {
 			$params = array();
 		}
 
-		return call_user_func( array( $this, 'action_' . $method ), $id, $action, $params );
+		$result = call_user_func( array( $this, 'action_' . $method ), $id, $action, $params );
+
+		if ( is_array( $result ) && ! empty( $result['ok'] ) && empty( $result['message'] ) && ! empty( $result['token'] ) ) {
+			$result['message'] = __( 'توکن جدید صادر شد.', 'bespari-core' );
+		}
+
+		return $result;
+	}
+
+	/**
+	 * برچسب فارسی فیچر برای پیام‌های پیش‌فرض.
+	 *
+	 * @param string $feature کلید فیچر.
+	 * @return string
+	 */
+	private function feature_label( string $feature ): string {
+		$labels = array(
+			'brands'           => __( 'برند', 'bespari-core' ),
+			'pricing'          => __( 'قانون قیمت‌گذاری', 'bespari-core' ),
+			'settlements'      => __( 'تسویه', 'bespari-core' ),
+			'payouts'          => __( 'پرداخت', 'bespari-core' ),
+			'shipments'        => __( 'محموله', 'bespari-core' ),
+			'returns'          => __( 'مرجوعی', 'bespari-core' ),
+			'requests'         => __( 'درخواست', 'bespari-core' ),
+			'accounting'       => __( 'تراکنش', 'bespari-core' ),
+			'invoices'         => __( 'صورتحساب', 'bespari-core' ),
+			'agents'           => __( 'اتصال اقماری', 'bespari-core' ),
+			'users'            => __( 'کاربر', 'bespari-core' ),
+			'seller_dashboard' => __( 'حساب بازاریاب', 'bespari-core' ),
+		);
+
+		return $labels[ $feature ] ?? '';
 	}
 
 	public function handle_preview( \WP_REST_Request $request ): array {
@@ -1045,8 +1097,30 @@ class ErpRestController {
 		$service = new UserService();
 		$result  = $service->list( $args );
 
-		$rows = array();
+		$role_options = array();
+		foreach ( UserService::roles() as $key => $label ) {
+			$role_options[] = array( 'value' => $key, 'label' => $label );
+		}
+
+		$rows   = array();
+		$values = array();
 		foreach ( $result['rows'] as $u ) {
+			$is_seller = ( 'bespari_seller' === $u['role'] );
+
+			$access = '';
+			if ( $is_seller ) {
+				$brands    = SellerAccess::allowed_brands( (int) $u['id'] );
+				$categories = SellerAccess::allowed_categories( (int) $u['id'] );
+				$parts     = array();
+				if ( $brands ) {
+					$parts[] = __( 'برندها: ', 'bespari-core' ) . esc_html( implode( '، ', $brands ) );
+				}
+				if ( $categories ) {
+					$parts[] = __( 'دسته‌ها: ', 'bespari-core' ) . esc_html( implode( '، ', $categories ) );
+				}
+				$access = $parts ? implode( '<br>', $parts ) : '<span class="bp-muted">—</span>';
+			}
+
 			$rows[] = array(
 				$u['id'],
 				esc_html( $u['login'] ),
@@ -1054,18 +1128,46 @@ class ErpRestController {
 				esc_html( $u['email'] ),
 				esc_html( $u['role_label'] ),
 				(int) $u['tokens'],
+				$access,
+			);
+
+			// مقادیر اولیه برای فرم ویرایش.
+			$values[ $u['id'] ] = array(
+				'user_login'   => $u['login'],
+				'display_name' => $u['name'],
+				'email'        => $u['email'],
+				'role'         => $u['role'],
+				'brand_ids'    => $is_seller ? array_map( 'strval', SellerAccess::allowed_brand_ids( (int) $u['id'] ) ) : array(),
+				'category_ids' => $is_seller ? array_map( 'strval', SellerAccess::allowed_category_ids( (int) $u['id'] ) ) : array(),
 			);
 		}
 
-		$role_options = array();
-		foreach ( UserService::roles() as $key => $label ) {
-			$role_options[] = array( 'value' => $key, 'label' => $label );
+		$brand_options = array();
+		foreach ( ( new \Bespari\Modules\Brand\BrandRepository() )->get_all() as $b ) {
+			$brand_options[] = array( 'value' => (string) $b->id, 'label' => $b->name );
 		}
+
+		$category_options = array();
+		if ( taxonomy_exists( 'product_cat' ) ) {
+			$terms = get_terms( array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'number'     => 200,
+			) );
+			if ( ! is_wp_error( $terms ) ) {
+				foreach ( $terms as $t ) {
+					$category_options[] = array( 'value' => (string) $t->term_id, 'label' => $t->name );
+				}
+			}
+		}
+
+		$seller_when = array( 'field' => 'role', 'value' => 'bespari_seller' );
 
 		return array(
 			'ok'        => true,
 			'title'     => __( 'کاربران', 'bespari-core' ),
-			'headers'   => array( __( 'شناسه', 'bespari-core' ), __( 'نام کاربری', 'bespari-core' ), __( 'نام', 'bespari-core' ), __( 'ایمیل', 'bespari-core' ), __( 'نقش', 'bespari-core' ), __( 'توکن‌ها', 'bespari-core' ) ),
+			'headers'   => array( __( 'شناسه', 'bespari-core' ), __( 'نام کاربری', 'bespari-core' ), __( 'نام', 'bespari-core' ), __( 'ایمیل', 'bespari-core' ), __( 'نقش', 'bespari-core' ), __( 'توکن‌ها', 'bespari-core' ), __( 'دسترسی بازاریاب', 'bespari-core' ) ),
 			'rows'      => $rows,
 			'pages'     => $result['pages'],
 			'page'      => $result['page'],
@@ -1073,15 +1175,31 @@ class ErpRestController {
 				array( 'name' => 'role', 'type' => 'select', 'options' => $role_options, 'label' => __( 'نقش', 'bespari-core' ) ),
 			),
 			'form'      => array(
-				'fields' => array(
+				'fields'  => array(
 					array( 'name' => 'user_login', 'label' => __( 'نام کاربری', 'bespari-core' ), 'type' => 'text', 'required' => true ),
 					array( 'name' => 'display_name', 'label' => __( 'نام نمایشی', 'bespari-core' ), 'type' => 'text', 'required' => true ),
 					array( 'name' => 'email', 'label' => __( 'ایمیل', 'bespari-core' ), 'type' => 'text', 'required' => true ),
 					array( 'name' => 'role', 'label' => __( 'نقش', 'bespari-core' ), 'type' => 'select', 'options' => $role_options, 'required' => true ),
 					array( 'name' => 'password', 'label' => __( 'رمز عبور (خالی = خودکار)', 'bespari-core' ), 'type' => 'password' ),
+					array(
+						'name'     => 'brand_ids',
+						'label'    => __( 'برندهای مجاز', 'bespari-core' ),
+						'type'     => 'checkboxes',
+						'options'  => $brand_options,
+						'showWhen' => $seller_when,
+					),
+					array(
+						'name'     => 'category_ids',
+						'label'    => __( 'دسته‌بندی‌های مجاز', 'bespari-core' ),
+						'type'     => 'checkboxes',
+						'options'  => $category_options,
+						'showWhen' => $seller_when,
+					),
 				),
+				'values' => $values,
 			),
 			'rowActions' => array(
+				'edit'   => __( 'ویرایش', 'bespari-core' ),
 				'token'  => __( 'صدور توکن', 'bespari-core' ),
 				'delete' => __( 'حذف', 'bespari-core' ),
 			),
@@ -1090,13 +1208,49 @@ class ErpRestController {
 
 	private function write_users( int $id, array $input ): array {
 		$service = new UserService();
-		$result  = $id ? $service->update( $id, $input ) : $service->create( $input );
+
+		// دسترسی بازاریاب (فقط برای نقش seller ذخیره می‌شود).
+		$brand_ids    = array_filter( array_map( 'intval', (array) ( $input['brand_ids'] ?? array() ) ) );
+		$category_ids = array_filter( array_map( 'intval', (array) ( $input['category_ids'] ?? array() ) ) );
+		$role         = sanitize_key( (string) ( $input['role'] ?? '' ) );
+
+		$result = $id ? $service->update( $id, $input ) : $service->create( $input );
 
 		if ( is_wp_error( $result ) ) {
 			return array( 'ok' => false, 'message' => $result->get_error_message() );
 		}
 
-		return array( 'ok' => true, 'id' => $result );
+		$user_id = $id ? $id : (int) $result;
+
+		if ( 'bespari_seller' === $role ) {
+			SellerAccess::set_access( $user_id, $brand_ids, $category_ids );
+		} else {
+			SellerAccess::clear( $user_id );
+		}
+
+		$current_user = get_user_by( 'id', $user_id );
+		$login        = (string) ( $input['user_login'] ?? ( $current_user->user_login ?? '' ) );
+		if ( $id ) {
+			$message = sprintf( __( 'اطلاعات کاربر «%s» به‌روزرسانی شد.', 'bespari-core' ), $login );
+		} else {
+			$message = sprintf( __( 'کاربر «%s» با موفقیت اضافه شد. رمز عبور یک‌بار در اختیار مدیر است.', 'bespari-core' ), $login );
+			if ( 'bespari_seller' === $role ) {
+				$parts = array();
+				if ( $brand_ids ) {
+					$parts[] = sprintf( _n( '%d برند', '%d برند', count( $brand_ids ), 'bespari-core' ), count( $brand_ids ) );
+				}
+				if ( $category_ids ) {
+					$parts[] = sprintf( _n( '%d دسته‌بندی', '%d دسته‌بندی', count( $category_ids ), 'bespari-core' ), count( $category_ids ) );
+				}
+				if ( $parts ) {
+					$message .= ' ' . sprintf( __( 'دسترسی: %s.', 'bespari-core' ), implode( ' و ', $parts ) );
+				} else {
+					$message .= ' ' . __( 'توجه: دسترسی برند/دسته‌بندی‌ای تعیین نشده است.', 'bespari-core' );
+				}
+			}
+		}
+
+		return array( 'ok' => true, 'id' => $user_id, 'message' => $message );
 	}
 
 	private function action_users( int $id, string $action, array $params ): array {

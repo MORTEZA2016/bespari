@@ -249,3 +249,67 @@ Task بسته شد. BSPR-002 (خط تولید) نیز در پی تست‌های 
 
 **Next Step:**
 Task بسته شد. هیچ Task فعالی باقی نمانده؛ منتظر دستور بعدی کاربر.
+
+---
+
+## TASK-20260926-006 (BSPR-005)
+
+**Status:** COMPLETED
+
+**Goal:** سه درخواست کاربر: ۱) باگ افزودن کاربر (صفحه فقط رفرش می‌شد، بدون پیام)؛
+۲) نمایش پیام موفقیت/نتیجه بعد از کارها در همه‌ی بخش‌ها؛ ۳) دسترسی برند +
+دسته‌بندی محصول به بازاریاب هنگام ساخت و محدود کردن ثبت سفارش به همان‌ها.
+
+**Started/Completed:** 2026-09-26
+
+**Changed Files:**
+- **اصلاح**: `assets/js/app.js` —
+  `api()`: رد کردن `ok:false` حتی با HTTP 200 (علت اصلی باگ صمت بودن)؛
+  `crudState.pendingAlert`: پیام پس از رندر مجدد نمایش داده می‌شود؛
+  نوع فیلد `checkboxes` + `showWhen` (نمایش شرطی دسترسی‌ها فقط برای نقش seller)؛
+  اکشن ردیف «ویرایش» با `res.form.values`.
+- **اصلاح**: `assets/css/app.css` — استایل `.bp-checks`/`.bp-check`.
+- **اصلاح**: `includes/Core/Activator.php` — جداول `seller_brands`/`seller_categories`
+  + `maybe_create_seller_access_tables()` (self-healing با information_schema).
+- **اصلاح**: `includes/Core/Plugin.php` — ثبت migration روی `init`.
+- **اصلاح**: `includes/Api/ErpRestController.php` —
+  فیلدهای `brand_ids`/`category_ids` با options برندها و دسته‌های ووکامرس؛
+  ستون «دسترسی بازاریاب»؛ `form.values` برای ویرایش؛ `write_users` ذخیره/پاکسازی
+  دسترسی + پیام نتیجه کامل؛ `handle_write/handle_delete` پیام پیش‌فرض با برچسب فیچر.
+- **اصلاح**: `includes/Api/PosRestController.php` — scope محصولات/کانال‌ها برای
+  seller و اعتبارسنجی آیتم‌ها در `pos/order`/`pos/calculate` (403).
+- **اصلاح**: `includes/Modules/Product/ProductRepository.php` — فیلتر `brand__in`/`category__in`.
+- **جدید**: `includes/Modules/Seller/SellerAccess.php` — مدیریت دسترسی بازاریاب.
+
+**Tests (زنده روی dev):**
+| تست | نتیجه |
+|---|---|
+| php -l همه‌ی فایل‌ها + node --check app.js | PASS |
+| ایجاد جداول جدید (self-healing) | PASS |
+| ایمیل تکرادی → پیام خطا (به‌جای موفقیت صامت) | PASS |
+| ساخت بازاریاب با برند ۱ + دسته ۱۷ + پیام نتیجه | PASS |
+| لیست کاربران: ستون دسترسی + مقادیر ویرایش | PASS |
+| `pos/products` بازاریاب: ۱ محصول از ۳ | PASS |
+| `pos/channels` بازاریاب: فقط کانال برندهای مجاز | PASS |
+| سفارش محصول مجاز → ثبت شد | PASS |
+| سفارش محصول با دسته غیرمجاز → 403 | PASS |
+| سفارش محصول بدون برند → 403 | PASS |
+| ویرایش دسترسی → محصولات بیشتر در POS | PASS |
+| ادمین محدود نمی‌شود | PASS |
+| پاک‌سازی کامل داده‌ی تست | PASS |
+
+**Issues:**
+- پنل مرورگری در این نصب فعال نبود؛ تست UI از طریق API + بررسی کد انجام شد.
+  رفتار JS با `node --check` و بازبینی دستی تأیید شد.
+- داده‌ی تست (۲ دسته ووکامرس، اتصال محصولات، نگاشت برند-کانال، ۳ کاربر، ۱ سفارش)
+  پس از تست‌ها کاملاً پاک و بازگردانی شد.
+
+**Important Decisions:**
+- فروشنده = کاربر WP با نقش `bespari_seller` (جدول مستقل sellers وجود ندارد)؛
+  `orders.seller_id` همان user_id است.
+- محصول مجاز = برند مجاز **و** دسته‌بندی مجاز (هر دو شرط).
+- کاربرهای دارای `bespari_manage_orders` محدود نمی‌شوند.
+- کانال‌های مجاز = کانال‌های فعالِ برندهای مجاز (از brand_channels).
+
+**Next Step:**
+Task بسته شد. منتظر دستور بعدی کاربر.

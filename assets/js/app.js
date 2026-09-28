@@ -57,7 +57,9 @@
 			body: options.body ? JSON.stringify( options.body ) : undefined
 		} ).then( function ( res ) {
 			return res.json().then( function ( json ) {
-				if ( ! res.ok ) {
+				// کنترلرهای ERP ممکن است خطا را با HTTP 200 و ok:false برگردانند؛
+				// این حالت هم باید به عنوان خطا مدیریت شود تا پیام‌ها نمایش پیدا کنند.
+				if ( ! res.ok || ( json && false === json.ok ) ) {
 					var msg = ( json && json.message ) || 'خطای ارتباط با سرور';
 					var err = new Error( msg );
 					err.status = res.status;
@@ -1055,7 +1057,7 @@
 		users: true
 	};
 
-	var crudState = { view: '', filters: {} };
+	var crudState = { view: '', filters: {}, pendingAlert: null };
 
 	function crudQuery() {
 		var p = [ 'page=' + state.page ];
@@ -1179,6 +1181,13 @@
 
 		content.innerHTML = html;
 		bindCrud( content, res );
+
+		// پیامی که پس از عملیات قبلی صف شده را بعد از رندر جدول نمایش می‌دهد
+		// (تا با رندر مجدد از بین نرود).
+		if ( crudState.pendingAlert ) {
+			crudAlert( content, crudState.pendingAlert.msg, crudState.pendingAlert.isError );
+			crudState.pendingAlert = null;
+		}
 	}
 
 	function crudAlert( content, message, isError ) {
@@ -1254,6 +1263,11 @@
 					issueUserToken( content, id );
 					return;
 				}
+				if ( 'edit' === action ) {
+					var vals = ( res && res.form && res.form.values && res.form.values[ id ] ) || {};
+					openCrudModal( content, res.form, id, vals );
+					return;
+				}
 
 				b.disabled = true;
 				b.textContent = '...';
@@ -1263,7 +1277,7 @@
 						if ( r && r.api_secret ) {
 							showSecret( content, r.api_secret );
 						}
-						crudAlert( content, 'عملیات انجام شد.', false );
+						crudState.pendingAlert = { msg: ( r && r.message ) || 'عملیات انجام شد.', isError: false };
 						renderCrud( content, crudState.view );
 					} )
 					.catch( function ( err ) {
@@ -1322,6 +1336,19 @@
 			case 'checkbox':
 				html = '<input type="checkbox" class="bp-input" id="' + name + '"' + ( v ? ' checked' : '' ) + '>';
 				break;
+			case 'checkboxes':
+				// گروه چندانتخابه (مثلاً برندها/دسته‌بندی‌های دسترسی بازاریاب).
+				var sel = Array.isArray( v ) ? v.map( String ) : [];
+				html = '<div class="bp-checks" id="' + name + '">';
+				( field.options || [] ).forEach( function ( o ) {
+					var val = String( o.value !== undefined ? o.value : o );
+					var lbl = o.label !== undefined ? o.label : o;
+					var on = ( sel.indexOf( val ) !== -1 ) ? ' checked' : '';
+					html += '<label class="bp-check"><input type="checkbox" value="' + esc( val ) + '"' + on + '>' +
+						'<span>' + esc( lbl ) + '</span></label>';
+				} );
+				html += '</div>';
+				break;
 			case 'number':
 				html = '<input type="number" step="any" class="bp-input" id="' + name + '" value="' + esc( v ) + '"' + req + '>';
 				break;
@@ -1335,10 +1362,26 @@
 				html = '<input type="text" class="bp-input" id="' + name + '" value="' + esc( v ) + '"' + req + '>';
 		}
 
-		return '<div class="bp-field"><label for="' + name + '">' + esc( field.label ) + '</label>' + html + '</div>';
+		var showWhen = '';
+		if ( field.showWhen ) {
+			// فیلد فقط وقتی نمایش داده می‌شود که فیلدِ مرجع این مقدار را داشته باشد.
+			showWhen = ' data-show-when="' + esc( field.showWhen.field ) + '" data-show-value="' + esc( field.showWhen.value ) + '"';
+		}
+
+		return '<div class="bp-field"' + showWhen + '><label for="' + name + '">' + esc( field.label ) + '</label>' + html + '</div>';
 	}
 
 	function readFieldValue( field ) {
+		if ( 'checkboxes' === field.type ) {
+			var box = document.getElementById( 'field-' + field.name );
+			if ( ! box ) { return []; }
+			var vals = [];
+			box.querySelectorAll( 'input[type="checkbox"]:checked' ).forEach( function ( c ) {
+				vals.push( c.value );
+			} );
+			return vals;
+		}
+
 		var el = document.getElementById( 'field-' + field.name );
 		if ( ! el ) { return undefined; }
 		if ( 'checkbox' === field.type ) { return el.checked; }
@@ -1356,6 +1399,17 @@
 			'<div class="bp-modal__foot"><button class="bp-btn bp-btn--primary" id="bp-modal-save">ذخیره</button></div>';
 
 		var modal = openModal( id ? 'ویرایش' : 'افزودن', body );
+
+		// نمایش شرطی فیلدها (مثلاً دسترسی‌ها فقط برای نقش بازاریاب).
+		var syncShowWhen = function () {
+			modal.querySelectorAll( '[data-show-when]' ).forEach( function ( f ) {
+				var src = modal.querySelector( '#field-' + f.dataset.showWhen );
+				var match = !!( src && String( src.value ) === f.dataset.showValue );
+				f.style.display = match ? '' : 'none';
+			} );
+		};
+		modal.addEventListener( 'change', syncShowWhen );
+		syncShowWhen();
 
 		modal.querySelector( '#bp-modal-save' ).addEventListener( 'click', function () {
 			var btn = modal.querySelector( '#bp-modal-save' );
@@ -1376,7 +1430,7 @@
 						showSecret( content, r.api_secret );
 					}
 					closeModal();
-					crudAlert( content, 'ذخیره شد.', false );
+					crudState.pendingAlert = { msg: ( r && r.message ) || 'با موفقیت ذخیره شد.', isError: false };
 					renderCrud( content, crudState.view );
 				} )
 				.catch( function ( err ) {

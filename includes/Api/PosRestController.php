@@ -11,6 +11,7 @@ use Bespari\Support\Helpers;
 use Bespari\Modules\Product\ProductRepository;
 use Bespari\Modules\Channel\ChannelRepository;
 use Bespari\Modules\Order\OrderService;
+use Bespari\Modules\Seller\SellerAccess;
 
 // جلوگیری از دسترسی مستقیم.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -71,10 +72,9 @@ class PosRestController {
 
 	/**
 	 * GET products?s=جستجو — لیست محصولات برای جستجوی POS.
+	 * برای بازاریاب فقط محصولات برندها/دسته‌بندی‌های مجاز برگردانده می‌شود.
 	 */
 	public function handle_products( \WP_REST_Request $request ): \WP_REST_Response {
-		global $wpdb;
-
 		$search = sanitize_text_field( (string) $request->get_param( 's' ) );
 		$limit  = min( 50, max( 1, (int) $request->get_param( 'limit' ) ?: 25 ) );
 
@@ -82,6 +82,12 @@ class PosRestController {
 		$args  = array( 'per_page' => $limit, 'page' => 1, 'status' => 1 );
 		if ( '' !== $search ) {
 			$args['search'] = $search;
+		}
+
+		// محدودسازی بازاریاب به دسترسی‌های تعریف‌شده.
+		if ( SellerAccess::is_restricted( get_current_user_id() ) ) {
+			$args['brand__in']    = SellerAccess::allowed_brand_ids( get_current_user_id() );
+			$args['category__in'] = SellerAccess::allowed_category_ids( get_current_user_id() );
 		}
 
 		$res  = $repo->paginate( $args );
@@ -101,14 +107,19 @@ class PosRestController {
 	}
 
 	/**
-	 * GET channels — کانال‌های فعال.
+	 * GET channels — کانال‌های فعال (برای بازاریاب فقط کانال‌های برندهای مجاز).
 	 */
 	public function handle_channels(): \WP_REST_Response {
 		$repo    = new ChannelRepository();
 		$channels = $repo->get_all( true );
 
+		$allowed = SellerAccess::allowed_channel_ids( get_current_user_id() );
+
 		$out = array();
 		foreach ( (array) $channels as $ch ) {
+			if ( $allowed && ! in_array( (int) $ch->id, $allowed, true ) ) {
+				continue;
+			}
 			$out[] = array(
 				'id'              => (int) $ch->id,
 				'name'            => (string) $ch->name,
@@ -146,6 +157,14 @@ class PosRestController {
 
 		if ( empty( $clean_items ) ) {
 			return new \WP_REST_Response( array( 'ok' => false, 'message' => __( 'حداقل یک محصول معتبر لازم است.', 'bespari-core' ) ), 400 );
+		}
+
+		$denied = $this->find_inaccessible_product( $clean_items );
+		if ( null !== $denied ) {
+			return new \WP_REST_Response( array(
+				'ok'      => false,
+				'message' => sprintf( __( 'شما به این محصول دسترسی ندارید (شناسه %d). فقط محصولات برندها و دسته‌بندی‌های مجاز قابل ثبت هستند.', 'bespari-core' ), $denied ),
+			), 403 );
 		}
 
 		$seller_id = current_user_can( 'bespari_seller_view' ) && ! current_user_can( 'bespari_manage_orders' )
@@ -202,6 +221,14 @@ class PosRestController {
 			return new \WP_REST_Response( array( 'ok' => false, 'message' => __( 'برای این کانال (فاکتور به فاکتور) نام و تلفن مشتری الزامی است.', 'bespari-core' ) ), 400 );
 		}
 
+		$denied = $this->find_inaccessible_product( $clean_items );
+		if ( null !== $denied ) {
+			return new \WP_REST_Response( array(
+				'ok'      => false,
+				'message' => sprintf( __( 'شما به این محصول دسترسی ندارید (شناسه %d). فقط محصولات برندها و دسته‌بندی‌های مجاز قابل ثبت هستند.', 'bespari-core' ), $denied ),
+			), 403 );
+		}
+
 		$service = new OrderService();
 		$seller_id = current_user_can( 'bespari_seller_view' ) && ! current_user_can( 'bespari_manage_orders' )
 			? get_current_user_id()
@@ -230,5 +257,27 @@ class PosRestController {
 			'order_id'     => (int) $order_id,
 			'order_number' => $order ? (string) $order->order_number : '',
 		) );
+	}
+
+	/**
+	 * اولین محصولی که کاربر جاری به آن دسترسی ندارد (یا null).
+	 *
+	 * @param array $clean_items آیتم‌های پاک‌شده.
+	 * @return int|null
+	 */
+	private function find_inaccessible_product( array $clean_items ): ?int {
+		$user_id = get_current_user_id();
+
+		if ( ! SellerAccess::is_restricted( $user_id ) ) {
+			return null;
+		}
+
+		foreach ( $clean_items as $item ) {
+			if ( ! SellerAccess::can_access_product( $user_id, (int) ( $item['product_id'] ?? 0 ) ) ) {
+				return (int) ( $item['product_id'] ?? 0 );
+			}
+		}
+
+		return null;
 	}
 }

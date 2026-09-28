@@ -517,6 +517,11 @@ a:hover { color: var(--bp-primary-hover); }
 .bp-input { width: 100%; padding: 9px 12px; border: 1px solid var(--bp-border,#d1d5db); border-radius: 8px; font: inherit; background: var(--bp-input-bg,#fff); box-sizing: border-box; }
 .bp-input:focus { outline: 2px solid var(--bp-primary,#6366f1); outline-offset: 1px; }
 
+/* گروه چندانتخابه (دسترسی بازاریاب به برندها/دسته‌بندی‌ها) */
+.bp-checks { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 6px 12px; max-height: 190px; overflow: auto; border: 1px solid var(--bp-border,#d1d5db); border-radius: 8px; padding: 10px 12px; background: var(--bp-input-bg,#fff); }
+.bp-check { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 400; cursor: pointer; margin: 0; }
+.bp-check input { width: auto; margin: 0; }
+
 /* توکن / راز یک‌بار */
 .bp-token { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
 .bp-token code { flex: 1; font-family: monospace; font-size: 12px; background: var(--bp-bg-secondary,#f9fafb); border: 1px dashed var(--bp-border,#d1d5db); border-radius: 8px; padding: 10px; word-break: break-all; direction: ltr; }

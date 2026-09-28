@@ -108,6 +108,9 @@ class Plugin {
 		// همگام‌سازی cap مدیریت کاربران (self-healing).
 		add_action( 'init', array( $this, 'maybe_migrate_users_cap' ), 1 );
 
+		// جداول دسترسی بازاریاب (self-healing).
+		add_action( 'init', array( $this, 'maybe_create_seller_access_tables' ), 1 );
+
 		// راه‌اندازی ماژول‌ها.
 		$this->boot_modules();
 	}
@@ -140,6 +143,13 @@ class Plugin {
 	 */
 	public function maybe_migrate_users_cap(): void {
 		Activator::maybe_sync_users_cap();
+	}
+
+	/**
+	 * ساخت جداول دسترسی بازاریاب در صورت نبودن.
+	 */
+	public function maybe_create_seller_access_tables(): void {
+		Activator::maybe_create_seller_access_tables();
 	}
 
 	/**

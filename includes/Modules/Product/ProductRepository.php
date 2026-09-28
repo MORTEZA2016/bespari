@@ -24,25 +24,29 @@ class ProductRepository extends BaseRepository {
 	 * دریافت لیست محصولات با صفحه‌بندی و جستجو.
 	 *
 	 * @param array  $args {
-	 *     @type string $search    عبارت جستجو.
-	 *     @type int    $brand_id  فیلتر برند.
-	 *     @type int    $status    فیلتر وضعیت.
-	 *     @type int    $per_page  تعداد در صفحه.
-	 *     @type int    $page      شماره صفحه.
+	 *     @type string $search       عبارت جستجو.
+	 *     @type int    $brand_id     فیلتر برند.
+	 *     @type int[]  $brand__in    محدود کردن به این برندها.
+	 *     @type int[]  $category__in محدود کردن به این دسته‌بندی‌ها.
+	 *     @type int    $status       فیلتر وضعیت.
+	 *     @type int    $per_page     تعداد در صفحه.
+	 *     @type int    $page         شماره صفحه.
 	 * }
 	 * @return array{items:ProductModel[],total:int}
 	 */
 	public function paginate( array $args = array() ): array {
 		global $wpdb;
 
-		$table     = $this->table();
-		$brands    = Helpers::table( 'brands' );
-		$search    = $args['search'] ?? '';
-		$brand_id  = (int) ( $args['brand_id'] ?? 0 );
-		$status    = isset( $args['status'] ) ? (int) $args['status'] : -1;
-		$per_page  = max( 1, (int) ( $args['per_page'] ?? 20 ) );
-		$page      = max( 1, (int) ( $args['page'] ?? 1 ) );
-		$offset    = ( $page - 1 ) * $per_page;
+		$table      = $this->table();
+		$brands     = Helpers::table( 'brands' );
+		$search     = $args['search'] ?? '';
+		$brand_id   = (int) ( $args['brand_id'] ?? 0 );
+		$brand_in   = array_filter( array_map( 'intval', (array) ( $args['brand__in'] ?? array() ) ) );
+		$category_in = array_filter( array_map( 'intval', (array) ( $args['category__in'] ?? array() ) ) );
+		$status     = isset( $args['status'] ) ? (int) $args['status'] : -1;
+		$per_page   = max( 1, (int) ( $args['per_page'] ?? 20 ) );
+		$page       = max( 1, (int) ( $args['page'] ?? 1 ) );
+		$offset     = ( $page - 1 ) * $per_page;
 
 		$where  = array( '1=1' );
 		$values = array();
@@ -58,6 +62,18 @@ class ProductRepository extends BaseRepository {
 		if ( $brand_id > 0 ) {
 			$where[]  = 'p.brand_id = %d';
 			$values[] = $brand_id;
+		}
+
+		if ( $brand_in ) {
+			$placeholders = implode( ',', array_fill( 0, count( $brand_in ), '%d' ) );
+			$where[]      = "p.brand_id IN ({$placeholders})";
+			$values       = array_merge( $values, $brand_in );
+		}
+
+		if ( $category_in ) {
+			$placeholders = implode( ',', array_fill( 0, count( $category_in ), '%d' ) );
+			$where[]      = "p.category_id IN ({$placeholders})";
+			$values       = array_merge( $values, $category_in );
 		}
 
 		if ( $status >= 0 ) {

@@ -562,6 +562,27 @@ class Activator {
 			KEY user_created (user_id, created_at)
 		) {$charset};";
 
+		// --- دسترسی بازاریاب به برندها و دسته‌بندی‌ها ----------------------------
+		$sql_seller_brands = "CREATE TABLE {$p}seller_brands (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id BIGINT(20) UNSIGNED NOT NULL,
+			brand_id BIGINT(20) UNSIGNED NOT NULL,
+			created_at DATETIME NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY user_brand (user_id, brand_id),
+			KEY brand_id (brand_id)
+		) {$charset};";
+
+		$sql_seller_categories = "CREATE TABLE {$p}seller_categories (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			user_id BIGINT(20) UNSIGNED NOT NULL,
+			category_id BIGINT(20) UNSIGNED NOT NULL,
+			created_at DATETIME NOT NULL,
+			PRIMARY KEY (id),
+			UNIQUE KEY user_category (user_id, category_id),
+			KEY category_id (category_id)
+		) {$charset};";
+
 		dbDelta( $sql_channels );
 		dbDelta( $sql_periods );
 		dbDelta( $sql_brands );
@@ -586,6 +607,8 @@ class Activator {
 		dbDelta( $sql_batches );
 		dbDelta( $sql_channel_invoices );
 		dbDelta( $sql_notifications );
+		dbDelta( $sql_seller_brands );
+		dbDelta( $sql_seller_categories );
 
 		// نگاشت یک‌باره حالت تسویه قدیمی → فاکتور به فاکتور (بازطراحی تسویه).
 		self::migrate_settlement_modes();
@@ -665,6 +688,61 @@ class Activator {
 		$admin = get_role( 'administrator' );
 		if ( $admin && ! $admin->has_cap( 'bespari_production_view' ) ) {
 			$admin->add_cap( 'bespari_production_view' );
+		}
+	}
+
+	/**
+	 * ساخت جداول دسترسی بازاریاب روی نصب‌های موجود (self-healing).
+	 */
+	public static function maybe_create_seller_access_tables(): void {
+		global $wpdb;
+
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+		$names = array( 'seller_brands', 'seller_categories' );
+		$found = array();
+		$rows  = $wpdb->get_results(
+			"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME LIKE '%bespari_seller%'"
+		);
+
+		foreach ( (array) $rows as $r ) {
+			$found[ strtolower( (string) $r->TABLE_NAME ) ] = true;
+		}
+
+		$charset = $wpdb->get_charset_collate();
+		$p       = $wpdb->prefix . 'bespari_';
+		$missing = false;
+
+		$sql = array(
+			"CREATE TABLE {$p}seller_brands (
+				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				user_id BIGINT(20) UNSIGNED NOT NULL,
+				brand_id BIGINT(20) UNSIGNED NOT NULL,
+				created_at DATETIME NOT NULL,
+				PRIMARY KEY (id),
+				UNIQUE KEY user_brand (user_id, brand_id),
+				KEY brand_id (brand_id)
+			) {$charset};",
+			"CREATE TABLE {$p}seller_categories (
+				id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+				user_id BIGINT(20) UNSIGNED NOT NULL,
+				category_id BIGINT(20) UNSIGNED NOT NULL,
+				created_at DATETIME NOT NULL,
+				PRIMARY KEY (id),
+				UNIQUE KEY user_category (user_id, category_id),
+				KEY category_id (category_id)
+			) {$charset};",
+		);
+
+		foreach ( $names as $i => $name ) {
+			if ( ! isset( $found[ $p . $name ] ) ) {
+				$missing = true;
+				dbDelta( $sql[ $i ] );
+			}
+		}
+
+		if ( $missing ) {
+			update_option( 'bespari_db_version', BESPARI_VERSION );
 		}
 	}
 

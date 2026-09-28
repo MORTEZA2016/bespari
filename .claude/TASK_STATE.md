@@ -2,39 +2,38 @@
 
 ## Current Task
 
-BSP-TEST-VPS — تست اجرای خودکار Claude VPS
+(none) — IDLE
 
 ## Status
 
-DONE
+IDLE — Task Queue on Trello board "bespari" is empty. Waiting for next poll.
 
 ## Claimed By
 
-Claude-PC
+Claude-PC (pc-worker)
 
-## Started At
+## Last Checked
 
-2026-09-28
+2026-09-28 (worker loop started; polls every 30 min at :07 and :37)
 
-## Completed At
+## Worker Loop
 
-2026-09-28
+- Board: bespari (6ab6fd9bd5bc7544ab9fb726)
+- Task Queue: 6ab964932da2e90775f4096a (0 cards)
+- In Progress: 6ab9649a8215e36ecd099352 (0 cards)
+- Review: 6ab9649eb7c47d0caa053617 (0 cards)
+- Done: 6ab964b2c4f942773077aa06
+- Branch: pc-worker only
 
-## Commit
+## Pending Hazard
 
-af207cd
+BSPR-005 work (~561 insertions across app.js/app.css, ErpRestController, PosRestController,
+Activator, Plugin, ProductRepository, DECISIONS.md, PROJECT_CONTEXT.md, PROJECT_LOG.md,
+CURRENT_TASK.md + new includes/Modules/Seller/SellerAccess.php) is COMPLETE and TESTED but
+NEVER COMMITTED. Working tree on pc-worker is dirty; main lacks SellerAccess.php.
+Ask user before committing — no Trello card authorized it.
 
-## Summary
+## Previous Task
 
-تست اتصال به Trello، GitHub و پروژه Bespari — همه تأیید شد.
-
-## Tests
-
-- Trello: خواندن برد bespari، لیست Task Queue، انتقال کارت به In Progress و ثبت کامنت — موفق.
-- GitHub: `git fetch --all` موفق (برنش جدید origin/vps-worker دریافت شد)، `git status` روی pc-worker سالم.
-- پروژه Bespari: مسیر کاری F:/plugin/bespari قابل دسترس، PHP 8.2.12 در C:/xampp/php/php.exe.
-- PHP lint: ۱۱۰ فایل PHP بدون خطای نحوی (exit_flag=0).
-
-## Trello Card
-
-https://trello.com/c/Ur0vRjab/2-bsp-test-vps-%D8%AA%D8%B3%D8%AA-%D8%A7%D8%AC%D8%B1%D8%A7%DB%8C-%D8%AE%D9%88%D8%AF%DA%A9%D8%A7%D8%B1-claude-vps
+BSP-TEST-VPS — تست اجرای خودکار Claude VPS — DONE — commit af207cd (2026-09-28)
+Card: https://trello.com/c/Ur0vRjab

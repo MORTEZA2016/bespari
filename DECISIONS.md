@@ -11,7 +11,7 @@
 هر حوزه‌ی کاری به‌صورت یک Module مستقل با چهار فایل `<Name>.php` (register) + `<Name>Service` + `<Name>Repository` + `<Name>Model` پیاده‌سازی شود.
 
 **Reason:**
-جداسازی清晰的 مسئولیت‌ها: register فقط هوک‌ها را وصل می‌کند، Service منطق را دارد، Repository فقط DB را می‌زند، Model داده‌ی typed است. اضافه/حذف حوزه بدون لمس بقیه ممکن می‌شود.
+جداسازی واضح مسئولیت‌ها: register فقط هوک‌ها را وصل می‌کند، Service منطق را دارد، Repository فقط DB را می‌زند، Model داده‌ی typed است. اضافه/حذف حوزه بدون لمس بقیه ممکن می‌شود.
 
 **Date:** فاز اول ساخت (سپتامبر ۲۰۲۶)
 
@@ -221,3 +221,45 @@ bespari طبیعی بود. صدور توکن از `AppAuth::issue` reuse شد.
 
 **Affected Areas:** `includes/Modules/User/UserService.php`, `includes/Api/ErpRestController.php`,
 `Activator` (cap `bespari_manage_users`)
+
+---
+
+## DEC-015
+
+**Decision:**
+کنترلرهای REST می‌توانند خطا را با HTTP 200 و `{"ok":false,"message":"..."}` برگردانند.
+بنابراین کلاینت (`assets/js/app.js::api()`) هم `res.ok` و هم `json.ok === false` را
+به‌عنوان خطا بررسی می‌کند.
+
+**Reason:**
+در غیر این صورت شکست‌های backend (مثلاً ایمیل تکرادی هنگام افزودن کاربر) در پنل
+به‌صورت موفقیت کاذب نمایش داده می‌شدند: پیام خطایی نبود، چیزی اضافه نمی‌شد و صفحه
+فقط رفرش می‌شد (BSPR-005). یک نقطه‌ی واحد در `api()` همه‌ی مسیرها را پوشش می‌دهد.
+
+**Date:** 2026-09-26
+
+**Affected Areas:** `assets/js/app.js`، همه‌ی کنترلرهای `includes/Api/`
+
+---
+
+## DEC-016
+
+**Decision:**
+«فروشنده/بازاریاب» یک جدول مستقل ندارد؛ همان کاربر وردپرس با نقش `bespari_seller`
+است و `orders.seller_id` به `user_id` اشاره می‌کند. دسترسی او به برندها و
+دسته‌بندی‌های محصول در دو جدول نگاشت `seller_brands` و `seller_categories`
+(هر دو با user_id) ذخیره می‌شود و یک محصول فقط در صورتی مجاز است که **هم** برندش
+مجاز باشد **و هم** دسته‌بندی‌اش. کاربرهای دارای `bespari_manage_orders` محدود نمی‌شوند.
+
+**Reason:**
+درخواست کاربر: «بازاریاب شماره یک به برند شماره یک و دسته‌بندی‌های لوستر سقفی و
+لوستر دیواری فقط دسترسی دارد». چون seller همان WP user است، نگاشت مستقلِ user_id-based
+ساده‌ترین و سازگارترین مدل بود (از `brands.owner_user_id` یک‌به‌یک استفاده نشد چون
+N:N لازم است و برند فقط یک owner دارد). اعمال محدودیت در سه نقطه: `pos/products`،
+`pos/channels` (کانال‌های برندهای مجاز) و اعتبارسنجی آیتم‌ها در `pos/order`/`calculate`.
+
+**Date:** 2026-09-26
+
+**Affected Areas:** `includes/Modules/Seller/SellerAccess.php` (جدید)،
+`includes/Core/Activator.php`، `includes/Api/{Erp,Pos}RestController.php`،
+`includes/Modules/Product/ProductRepository.php`
