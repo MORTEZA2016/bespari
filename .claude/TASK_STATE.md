@@ -1,7 +1,7 @@
 # TASK STATE
 
 ## Current Task
-تسکBSPR-006 — بررسی و بهبود داشبورد بسپاری
+BSP-007 — تست Worker خودکار
 
 ## Status
 DONE
@@ -10,37 +10,48 @@ DONE
 Claude Code (VPS worker)
 
 ## Started At
-2026-09-27
+2026-09-28
 
 ## Completed At
-2026-09-27
+2026-09-28
 
 ## Commit
-88aef07 (branch vps-worker, pushed to origin)
+d805bf5 (branch vps-worker, pushed to origin)
 
 ## Summary
-بررسی داشبورد پنل مستقل و اعمال بهبودهای ظاهری/ساختاری بدون تغییر رفتار فعلی:
-
-- `includes/Api/PanelRestController.php`:
-  - افزودن کارت‌های آمار «فروش امروز» و «سود امروز» (اسکوپ بازاریاب رعایت می‌شود) به `view_dashboard`.
-  - افزودن ستون تاریخ شمسی به جدول آخرین سفارشات.
-  - افزودن کلید `section_link` برای لینک «مشاهده همه».
-- `assets/js/app.js`:
-  - استخراج helper صفحه‌بندی پنجره‌ای `paginationHtml` (اول | … | جاری±۲ | … | آخر + برچسب «صفحه X از Y»).
-  - استفاده از آن در `renderTable` و `renderCrudBody` و انتقال صفحه‌بندی به زیر جدول.
-  - تغییر سلکتور کلیک به `button.bp-page`.
-  - رندر لینک «مشاهده همه» در عنوان section.
-  - ریست `state.page` به ۱ هنگام تغییر نما.
-- `assets/css/app.css`:
-  - نوار رنگی بالای کارت‌های آمار + افکت hover.
-  - section به flex و لینک با `margin-inline-start:auto`.
-  - استایل‌های صفحه‌بندی جدید (ellipsis، info label، hover states).
-  - اسکرول افقی جداول در عرض کمتر از ۷۲۰px.
+ایجاد `TEST-AUTOMATION.md` در ریشه پروژه با محتوای «Worker automation test successful.»، سپس commit و push به `origin/vps-worker`.
 
 ## Tests
-- `node --check assets/js/app.js` → OK.
-- اعتبارسنجی جامع منطق صفحه‌بندی (۳۲۴۰ حالت: pages ۱..۸۰ × تمام صفحات جاری) → ALL_OK (بدون صفحه تکراری، ترتیب صعودی، مرز درست، بدون ellipsis بی‌مورد).
-- PHP در این محیط قابل اجرا نیست؛ تغییرات PHP با بازبین دقیق بررسی شد.
+- محتوای فایل با `cat` تأیید شد.
+- `git status` پس از commit تمیز بود.
+- `git push origin vps-worker` → `35dc34c..d805bf5` موفق بود.
 
 ## Trello Card
-https://trello.com/c/x2RF7pGn
+https://trello.com/c/dVctcYVM
+
+---
+
+## Worker Pipeline (ترتیب canonical — همیشه رعایت شود)
+1. **Claim** — گرفتن کارت از `Task Queue`.
+2. **In Progress** — انتقال کارت به `In Progress`.
+3. **Task** — انجام کار.
+4. **Test** — تأیید خروجی/رفتار.
+5. **Commit** — فقط فایل‌های مرتبط (`git add .` ممنوع).
+6. **Push** — `git push origin vps-worker`.
+7. **Done** — انتقال کارت به `Done`.
+
+## قوانین
+- اگر **Push موفق** شد ولی **Trello خطا داد**، Task دوباره اجرا نمی‌شود؛
+  فقط همان عملیات Trello با commit موجود مجدداً تلاش می‌شود (idempotent).
+- خطاهای گذرای Trello (خطای Stage 2 permission classifier) با retry ساده برطرف می‌شوند
+  و به معنای مشکل ساختاری در IDها نیستند.
+
+## Board / List IDs (تأیید شده با MCP)
+- Board `bespari`: `ari:cloud:trello::board/workspace/60c9af7f1b0b05478fb70727/6ab6fd9bd5bc7544ab9fb726`
+- Task Queue:  `ari:cloud:trello::list/workspace/60c9af7f1b0b05478fb70727/6ab964932da2e90775f4096a`
+- In Progress: `ari:cloud:trello::list/workspace/60c9af7f1b0b05478fb70727/6ab9649a8215e36ecd099352`
+- Review:      `ari:cloud:trello::list/workspace/60c9af7f1b0b05478fb70727/6ab9649eb7c47d0caa053617`
+- Done:        `ari:cloud:trello::list/workspace/60c9af7f1b0b05478fb70727/6ab964b2c4f942773077aa06`
+
+## Previous Task
+BSPR-006 — بررسی و بهبود داشبورد بسپاری — DONE — commit 88aef07
