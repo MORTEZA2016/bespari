@@ -1,46 +1,55 @@
 # TASK STATE
 
 ## Current Task
-BSP-007 — تست Worker خودکار
+BSPR-MENU-02 — کانال‌های فروش
 
 ## Status
-DONE
+REVIEW
 
 ## Claimed By
-Claude Code (VPS worker)
+Claude-VPS (vps-worker)
 
 ## Started At
-2026-09-28
+2026-09-28T16:51:17Z
 
 ## Completed At
-2026-09-28
+2026-09-28T17:05:00Z
 
 ## Commit
-d805bf5 (branch vps-worker, pushed to origin)
+562473d (branch vps-worker, pushed to origin)
 
 ## Summary
-ایجاد `TEST-AUTOMATION.md` در ریشه پروژه با محتوای «Worker automation test successful.»، سپس commit و push به `origin/vps-worker`.
+پیاده‌سازی منوی مدیریت کانال‌های فروش با CRUD کامل در پنل مستقل:
+- `includes/Api/ErpRestController.php`: feature «channels» (read/write/delete)
+  با شمارش سفارش‌ها و برندهای مرتبط هر کانال، فرم حالت تسویه (select)،
+  `rowValues` برای پیش‌تغذیه فرم ویرایش و بج وضعیت فعال/غیرفعال.
+- `assets/js/app.js`: `channels` در `ERP_VIEWS`؛ اکشن عمومی «ویرایش» مودال CRUD
+  را با مقادیر فعلی باز می‌کند؛ فیلدهای select مقدار فعلی را نمایش می‌دهند.
 
 ## Tests
-- محتوای فایل با `cat` تأیید شد.
-- `git status` پس از commit تمیز بود.
-- `git push origin vps-worker` → `35dc34c..d805bf5` موفق بود.
+- `node --check assets/js/app.js` → OK.
+- PHP در این VPS نصب نیست؛ تغییرات PHP با بازبین دقیق بررسی شد.
 
 ## Trello Card
-https://trello.com/c/dVctcYVM
+https://trello.com/c/f0m4fci8
+
+## Previous Task
+BSP-007 — تست Worker خودکار — DONE — commit a6e57b2
 
 ---
 
 ## Worker Pipeline (ترتیب canonical — همیشه رعایت شود)
-1. **Claim** — گرفتن کارت از `Task Queue`.
-2. **In Progress** — انتقال کارت به `In Progress`.
-3. **Task** — انجام کار.
+1. **Claim** — گرفتن کارت آزاد از `Task Queue` (اگر Worker دیگری claim کرده → SKIP).
+2. **In Progress** — انتقال کارت به `In Progress` + ثبت WORKER/BRANCH/STATUS/CLAIMED_AT.
+3. **Task** — انجام کار (فقط روی branch `vps-worker`).
 4. **Test** — تأیید خروجی/رفتار.
 5. **Commit** — فقط فایل‌های مرتبط (`git add .` ممنوع).
 6. **Push** — `git push origin vps-worker`.
-7. **Done** — انتقال کارت به `Done`.
+7. **Review** — فقط بعد از Push موفق: انتقال کارت به `Review` + ثبت COMMIT/COMPLETED_AT.
+8. **توقف** — تا تأیید کاربر (انتقال به `Done`) Task جدید برندار.
 
 ## قوانین
+- یک Task = یک Worker؛ Task متعلق به Worker دیگر را برندار.
 - اگر **Push موفق** شد ولی **Trello خطا داد**، Task دوباره اجرا نمی‌شود؛
   فقط همان عملیات Trello با commit موجود مجدداً تلاش می‌شود (idempotent).
 - خطاهای گذرای Trello (خطای Stage 2 permission classifier) با retry ساده برطرف می‌شوند
