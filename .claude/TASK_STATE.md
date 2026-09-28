@@ -4,7 +4,7 @@
 BSPR-MENU-02 — کانال‌های فروش
 
 ## Status
-REVIEW
+DONE (تأیید کاربر — 2026-09-28T17:30:56Z)
 
 ## Claimed By
 Claude-VPS (vps-worker)
@@ -34,7 +34,7 @@ Claude-VPS (vps-worker)
 https://trello.com/c/f0m4fci8
 
 ## Previous Task
-BSP-007 — تست Worker خودکار — DONE — commit a6e57b2
+BSPR-MENU-02 — کانال‌های فروش — DONE — commit 562473d (تأیید 2026-09-28T17:30:56Z)
 
 ---
 
